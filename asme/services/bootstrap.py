@@ -153,6 +153,11 @@ def seed_defaults(commit=True) -> dict:
         created["users"] += 1
 
     seed_default_tracks(commit=False)
+
+    from asme.ops import bootstrap as ops_bootstrap
+
+    db.session.flush()
+    ops_bootstrap.ensure_default_organization(commit=False)
     if commit:
         db.session.commit()
     return created

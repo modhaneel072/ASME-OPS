@@ -140,7 +140,7 @@ Admin: `/portal/admin`, `/portal/admin/{members,attendance,inventory,prints,cale
 
 Shared-device: `/kiosk`, `/checkin`, `/checkin/select`, `/checkin/success`, `/pair/member`, `/pair/item`.
 
-Legacy ops pages stay behind `ASME_ENABLE_LEGACY_OPS=1`; otherwise `/dashboard`, `/attendance`, `/inventory`, `/prints`, `/activity`, `/settings`, `/scan`, `/my-items`, `/admin/nfc`, `/calendar`, `/app` redirect into the portal.
+Legacy ops pages stay behind `ASME_ENABLE_LEGACY_OPS=1`; otherwise `/dashboard`, `/attendance`, `/inventory`, `/prints`, `/activity`, `/settings`, `/scan`, `/my-items`, `/admin/nfc`, `/calendar`, `/legacy/app` redirect into the portal. `/app` serves ASME Ops.
 
 `python manage.py routes` prints every URL rule with its endpoint.
 

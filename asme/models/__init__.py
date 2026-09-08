@@ -55,3 +55,6 @@ __all__ = [
     "User",
     "WorkLog",
 ]
+
+# ASME Ops tables (ops_*). Imported here so create_all/Alembic see them.
+import asme.ops.models  # noqa: E402,F401  isort:skip

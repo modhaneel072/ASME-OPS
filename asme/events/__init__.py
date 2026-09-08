@@ -30,6 +30,12 @@ HOURS_LOGGED = "hours.logged"
 TASK_SIGNED_OFF = "task.signed_off"
 BOOKING_CREATED = "booking.created"
 CHAPTER_CHANGED = "chapter.changed"
+# ASME Ops
+MEMBERSHIP_CREATED = "ops.membership.created"
+PROJECT_CREATED = "ops.project.created"
+WORK_ORDER_CREATED = "ops.work_order.created"
+WORK_ORDER_STATUS_CHANGED = "ops.work_order.status_changed"
+ASSET_STATUS_CHANGED = "ops.asset.status_changed"
 
 ALL_EVENTS = (
     LOAN_OPENED,
@@ -46,6 +52,11 @@ ALL_EVENTS = (
     TASK_SIGNED_OFF,
     BOOKING_CREATED,
     CHAPTER_CHANGED,
+    MEMBERSHIP_CREATED,
+    PROJECT_CREATED,
+    WORK_ORDER_CREATED,
+    WORK_ORDER_STATUS_CHANGED,
+    ASSET_STATUS_CHANGED,
 )
 
 

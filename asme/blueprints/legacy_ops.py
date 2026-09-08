@@ -56,8 +56,9 @@ def _gate(portal_endpoint):
     return None
 
 
-@bp.get("/app")
+@bp.get("/legacy/app")
 def app_frontend():
+    """Kiosk-era front portal. ``/app`` now belongs to ASME Ops (see ``ops_app``)."""
     if not legacy_enabled():
         return redirect("/kiosk")
     return render_template("front/portal.html", **frontend_portal_context())

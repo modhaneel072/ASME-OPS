@@ -48,7 +48,7 @@ def create_app(settings: Settings | None = None, **overrides) -> Flask:
         SESSION_PERMANENT=False,
         TEMPLATES_AUTO_RELOAD=cfg.templates_auto_reload,
         TESTING=cfg.is_testing,
-        MAX_CONTENT_LENGTH=max(cfg.print_max_upload_bytes, 64 * 1024 * 1024),
+        MAX_CONTENT_LENGTH=max(cfg.print_max_upload_bytes, cfg.upload_max_bytes, 64 * 1024 * 1024),
     )
     app.jinja_env.auto_reload = cfg.templates_auto_reload
 
@@ -112,6 +112,7 @@ def _register_request_hooks(app: Flask, cfg: Settings):
 
     @app.before_request
     def _enforce_auth_session_guardrails():
+        g.ops_ctx = None  # per-request policy cache (see asme.ops.policy)
         if request.path.startswith(skip_prefixes) or request.path == "/healthz":
             return None
         current_auth_user()
@@ -130,6 +131,22 @@ def _register_request_hooks(app: Flask, cfg: Settings):
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
         return response
+
+    @app.errorhandler(404)
+    def _not_found(exc):
+        if request.path.startswith("/api/"):
+            from flask import jsonify
+
+            return jsonify({"ok": False, "code": "not_found", "error": "Not found."}), 404
+        return exc
+
+    @app.errorhandler(405)
+    def _method_not_allowed(exc):
+        if request.path.startswith("/api/"):
+            from flask import jsonify
+
+            return jsonify({"ok": False, "code": "method_not_allowed", "error": "Method not allowed."}), 405
+        return exc
 
     @app.teardown_appcontext
     def _shutdown_session(_exc):

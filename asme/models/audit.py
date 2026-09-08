@@ -33,3 +33,5 @@ class OutboxJob(db.Model):
     last_error = db.Column(db.String(1000), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     completed_at = db.Column(db.DateTime, nullable=True)
+    # Set by ``enqueue_once`` so recurring/event-driven work is scheduled exactly once.
+    idempotency_key = db.Column(db.String(160), nullable=True, unique=True)

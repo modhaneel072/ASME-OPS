@@ -139,6 +139,13 @@ def sign_in_user(user):
     _cache_user(user)
     user.last_login_at = datetime.utcnow()
     db.session.commit()
+    try:
+        from asme.ops.bootstrap import ensure_membership
+
+        ensure_membership(user)
+    except Exception:  # pragma: no cover - ops must never block a legacy login
+        log.exception("ops membership sync failed for user_id=%s", user.id)
+        db.session.rollback()
 
 
 def sign_out_user():

@@ -52,6 +52,36 @@ def enqueue(kind: str, payload: dict | None = None, run_at: datetime | None = No
     return job
 
 
+def enqueue_once(kind: str, idempotency_key: str, payload: dict | None = None, run_at: datetime | None = None, max_attempts: int = 5) -> OutboxJob | None:
+    """Enqueue ``kind`` unless a job with ``idempotency_key`` already exists.
+
+    Returns the new job, or ``None`` when the key was already used (any status).
+    Safe under concurrent callers thanks to the unique constraint; the insert
+    runs in a savepoint so a losing race does not poison the caller's transaction.
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    key = (idempotency_key or "").strip()[:160]
+    if not key:
+        raise ValueError("enqueue_once requires an idempotency key")
+    if OutboxJob.query.filter(OutboxJob.idempotency_key == key).first() is not None:
+        return None
+    job = OutboxJob(
+        kind=kind,
+        payload_json=json.dumps(payload or {}, default=str),
+        status="pending",
+        run_at=run_at or datetime.utcnow(),
+        max_attempts=max_attempts,
+        idempotency_key=key,
+    )
+    try:
+        with db.session.begin_nested():
+            db.session.add(job)
+    except IntegrityError:
+        return None
+    return job
+
+
 def _claim(job: OutboxJob) -> bool:
     updated = (
         OutboxJob.query.filter(OutboxJob.id == job.id, OutboxJob.status == "pending")

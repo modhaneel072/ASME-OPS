@@ -145,6 +145,14 @@ class Settings:
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-5"
 
+    # -- ASME Ops ------------------------------------------------------------
+    storage_backend: str = "local"
+    upload_root: str = ""
+    upload_max_bytes: int = 25 * 1024 * 1024
+    ops_changes_poll_seconds: int = 15
+    ops_download_ttl_seconds: int = 300
+    ops_seed_allowed: bool = True
+
     @property
     def is_production(self) -> bool:
         return self.env == "production"
@@ -224,6 +232,12 @@ class Settings:
             p1s_print_cmd=_str("ASME_P1S_PRINT_CMD"),
             anthropic_api_key=_str("ANTHROPIC_API_KEY"),
             anthropic_model=_str("ASME_ASSISTANT_MODEL", "claude-sonnet-5"),
+            storage_backend=(_str("ASME_STORAGE_BACKEND", "local").lower() or "local"),
+            upload_root=_str("ASME_UPLOAD_ROOT"),
+            upload_max_bytes=_int("ASME_UPLOAD_MAX_MB", 25, minimum=1) * 1024 * 1024,
+            ops_changes_poll_seconds=_int("ASME_OPS_POLL_SECONDS", 15, minimum=3),
+            ops_download_ttl_seconds=_int("ASME_OPS_DOWNLOAD_TTL_SECONDS", 300, minimum=30),
+            ops_seed_allowed=(env != "production"),
         )
         if values["calendar_provider"] not in {"google", "outlook"}:
             values["calendar_provider"] = "google"
@@ -250,6 +264,10 @@ class Settings:
             )
         if bool(self.smtp_user) != bool(self.smtp_pass):
             problems.append("ASME_SMTP_USER and ASME_SMTP_PASS must be set together.")
+        if self.storage_backend not in {"local", "s3"}:
+            problems.append("ASME_STORAGE_BACKEND must be 'local' or 's3'.")
+        if self.storage_backend == "s3":
+            problems.append("ASME_STORAGE_BACKEND=s3 is not implemented yet; use 'local' (see docs/deployment.md).")
         return problems
 
     def warnings(self) -> list[str]:
