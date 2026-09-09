@@ -90,3 +90,10 @@ def onboarding_evaluate_all(payload: dict):
     for user in User.query.filter(User.is_active.is_(True)).all():
         engine.evaluate_user(user)
     engine.evaluate_chapter()
+
+
+@handler("ops.work_order.scan")
+def ops_work_order_scan(payload: dict):
+    from asme.ops.services.scans import run_work_order_scan
+
+    run_work_order_scan()

@@ -188,6 +188,7 @@ def _loop(app, stop_event: threading.Event):
         while not stop_event.is_set():
             try:
                 ensure_recurring("stock.reconcile", timedelta(hours=24))
+                ensure_recurring("ops.work_order.scan", timedelta(hours=1))
                 process_pending()
             except Exception:  # pragma: no cover - defensive
                 log.exception("outbox worker iteration failed")

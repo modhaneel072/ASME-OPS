@@ -1,6 +1,27 @@
-"""Operations report.
+"""Operations report: ``GET /reports/operations?range=&start=&end=&filter[project]=&filter[team]=``.
 
-Routes are registered on the shared ``ops_api`` blueprint. This module is filled in
-by its vertical slice (see docs/plans/2026-09-08-asme-ops-stage1-stage2.md)."""
+Metric definitions live in ``docs/reporting-metrics.md``."""
 
-from asme.blueprints.ops import bp  # noqa: F401
+from __future__ import annotations
+
+from flask import request
+
+from asme.blueprints.ops import bp, ok, parse_filters
+from asme.ops import policy
+from asme.ops.services import dashboard
+
+FILTERS = {"project": "single", "team": "single"}
+
+
+@bp.get("/reports/operations")
+@policy.require_permission("report.view")
+def operations_report():
+    ctx = policy.current_context()
+    params = {}
+    for name in ("range", "start", "end"):
+        value = (request.args.get(name) or "").strip()
+        if value:
+            params[name] = value
+    for name, values in parse_filters(FILTERS).items():
+        params[name] = values[0]
+    return ok(dashboard.operations_report(ctx, params))

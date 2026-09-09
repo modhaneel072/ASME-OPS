@@ -17,6 +17,7 @@ from asme.extensions import db
 from asme.models import User
 from asme.ops import permissions as registry
 from asme.ops.models import Category, Location, Membership, Organization, Permission, Role, RolePermission, Sequence
+from asme.ops.types import utcnow
 
 log = logging.getLogger("asme.ops.bootstrap")
 
@@ -130,6 +131,14 @@ def ensure_membership(user, org: Organization | None = None, *, commit: bool = T
         return None
     membership = Membership.query.filter_by(organization_id=org.id, user_id=user.id).first()
     if membership:
+        # An invited member becomes active the first time they sign in.
+        if membership.member_status == "invited" and user.is_active:
+            membership.member_status = "active"
+            membership.joined_at = membership.joined_at or utcnow()
+            if commit:
+                db.session.commit()
+            else:
+                db.session.flush()
         return membership
     role_key = registry.LEGACY_ROLE_MAP.get((user.role or "").strip().lower(), "full_member")
     role = role_by_key(org, role_key) or role_by_key(org, "full_member")
