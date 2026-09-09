@@ -1,0 +1,1 @@
+import{lt as e}from"./ui-CFDT0wu0.js";import{t}from"./index-BSRQ8gg_.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Assets`,stage:2,description:`Asset hierarchy, status history and work-order links.`})}export{r as default};

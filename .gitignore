@@ -46,3 +46,6 @@ apps/ops-web/dist/
 apps/ops-web/test-results/
 apps/ops-web/playwright-report/
 apps/ops-web/e2e/__screenshots__/**/*-actual.png
+
+# TypeScript incremental build state
+*.tsbuildinfo

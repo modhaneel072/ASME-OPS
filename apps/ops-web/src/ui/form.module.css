@@ -1,0 +1,346 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 699px) {
+  .fieldRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-primary);
+}
+
+.required {
+  color: var(--color-danger);
+}
+
+.optional {
+  margin-left: auto;
+  font-size: var(--text-caption);
+  font-weight: 450;
+  color: var(--color-text-muted);
+}
+
+.hint {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: var(--color-danger-text);
+}
+
+.control {
+  width: 100%;
+  min-height: var(--control-height);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+  transition:
+    border-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.control::placeholder {
+  color: var(--color-text-muted);
+}
+
+.control:hover:not(:disabled) {
+  border-color: var(--color-border-focus);
+}
+
+.control:focus,
+.control:focus-within {
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.control:disabled,
+.control[aria-disabled='true'],
+.control[data-disabled='true'] {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+
+.control[aria-invalid='true'],
+.control[data-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.control[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px rgba(216, 74, 74, 0.22);
+}
+
+.control_compact {
+  min-height: var(--control-height-compact);
+}
+
+.textarea {
+  padding: 10px var(--space-3);
+  min-height: 96px;
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+.selectWrap {
+  position: relative;
+}
+
+.select {
+  appearance: none;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.selectChevron {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.inputAffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputAffix .control {
+  padding-left: 36px;
+}
+
+.affixIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+/* Checkbox / switch ------------------------------------------------------- */
+.check {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  cursor: pointer;
+}
+
+.checkBox {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 4px;
+  background: var(--color-bg-surface);
+  color: #fff;
+  flex: none;
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.check input:checked + .checkBox {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.check input:focus-visible + .checkBox {
+  box-shadow: var(--shadow-focus);
+}
+
+.check input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkLabel {
+  flex: 1;
+}
+
+.checkHint {
+  display: block;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+/* Combobox ---------------------------------------------------------------- */
+.comboControl {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px var(--space-2) 4px var(--space-3);
+  min-height: var(--control-height);
+  cursor: text;
+}
+
+.comboInput {
+  flex: 1;
+  min-width: 80px;
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+  font-size: var(--text-body);
+  outline: none;
+}
+
+.comboInput::placeholder {
+  color: var(--color-text-muted);
+}
+
+.comboToken {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 4px 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-subtle);
+  font-size: var(--text-label);
+  font-weight: 500;
+}
+
+.comboTokenRemove {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: var(--color-text-muted);
+}
+
+.comboTokenRemove:hover {
+  background: var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.comboChevron {
+  color: var(--color-text-muted);
+  margin-left: auto;
+  flex: none;
+}
+
+.comboList {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  min-width: 240px;
+}
+
+.comboOption {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 36px;
+  padding: 6px var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body);
+  text-align: left;
+}
+
+.comboOption[aria-selected='true'] {
+  font-weight: 600;
+}
+
+.comboOption[data-active='true'],
+.comboOption:hover {
+  background: var(--color-bg-hover);
+}
+
+.comboOptionMeta {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.comboEmpty {
+  padding: var(--space-4);
+  font-size: var(--text-label);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.avatar {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-active);
+  font-size: 10px;
+  font-weight: 700;
+  flex: none;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar_lg {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.avatarStack {
+  display: inline-flex;
+}
+
+.avatarStack .avatar {
+  margin-left: -6px;
+  box-shadow: 0 0 0 2px var(--color-bg-surface);
+}
+
+.avatarStack .avatar:first-child {
+  margin-left: 0;
+}
+
+.formSection {
+  padding-top: var(--space-4);
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.formSectionTitle {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-label);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}

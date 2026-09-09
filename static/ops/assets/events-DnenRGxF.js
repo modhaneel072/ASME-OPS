@@ -1,0 +1,1 @@
+import{lt as e}from"./ui-CFDT0wu0.js";import{t}from"./index-BSRQ8gg_.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Events`,stage:3,description:`Chapter events with checklists, attendance and generated work orders.`})}export{r as default};
