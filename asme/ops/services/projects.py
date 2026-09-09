@@ -614,20 +614,33 @@ def _mirror_legacy_memberships(project: OpsProject, legacy_id: int, removed_ids:
 # --------------------------------------------------------------------------- health / activity
 
 
-def _related_entity_criterion(project: OpsProject):
+def _related_entity_criterion(ctx, project: OpsProject):
+    """Audit events belonging to the project, its milestones and the work orders
+    the caller may actually read.
+
+    Work-order audit rows carry ``before``/``after`` snapshots (titles,
+    descriptions, assignments, cancel reasons, completion notes), so they are
+    restricted to ``visible_work_orders_query`` and to callers who hold a
+    work-order read permission at all. Without that the feed would be a way
+    around the work-order endpoints' own checks.
+    """
+    from asme.ops.services.work_orders import visible_work_orders_query
+
     milestone_ids = [str(row[0]) for row in db.session.execute(select(Milestone.id).where(Milestone.project_id == project.id)).all()]
-    work_order_ids = [str(row[0]) for row in db.session.execute(select(WorkOrder.id).where(WorkOrder.project_id == project.id)).all()]
     parts = [and_(AuditEvent.entity_type == "project", AuditEvent.entity_id == str(project.id))]
     if milestone_ids:
         parts.append(and_(AuditEvent.entity_type == "milestone", AuditEvent.entity_id.in_(milestone_ids)))
-    if work_order_ids:
-        parts.append(and_(AuditEvent.entity_type == "work_order", AuditEvent.entity_id.in_(work_order_ids)))
+    if ctx.has("work_order.read_all") or ctx.has("work_order.read_assigned"):
+        readable = visible_work_orders_query(ctx).filter(WorkOrder.project_id == project.id).with_entities(WorkOrder.id)
+        work_order_ids = [str(row[0]) for row in readable.all()]
+        if work_order_ids:
+            parts.append(and_(AuditEvent.entity_type == "work_order", AuditEvent.entity_id.in_(work_order_ids)))
     return and_(AuditEvent.organization_id == project.organization_id, or_(*parts))
 
 
 def activity_query(ctx, project: OpsProject):
-    """Audit events for the project, its milestones and its work orders, newest first."""
-    return AuditEvent.query.filter(_related_entity_criterion(project)).order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
+    """Audit events for the project, its milestones and its readable work orders, newest first."""
+    return AuditEvent.query.filter(_related_entity_criterion(ctx, project)).order_by(AuditEvent.occurred_at.desc(), AuditEvent.id.desc())
 
 
 def health(ctx, project: OpsProject) -> dict:
@@ -674,7 +687,7 @@ def health(ctx, project: OpsProject) -> dict:
     teams = list(db.session.scalars(select(Team).where(Team.project_id == project.id).order_by(Team.name.asc())))
     since = now - timedelta(days=7)
     activity_7d = int(
-        db.session.scalar(select(func.count(AuditEvent.id)).where(_related_entity_criterion(project), AuditEvent.occurred_at >= since)) or 0
+        db.session.scalar(select(func.count(AuditEvent.id)).where(_related_entity_criterion(ctx, project), AuditEvent.occurred_at >= since)) or 0
     )
     return {
         "completion_percent": _completion_percent(done, total, canceled),

@@ -13,6 +13,7 @@ from asme.blueprints.ops import bp, json_body, list_payload, ok, paginate, parse
 from asme.ops import policy
 from asme.ops.serializers import work_orders as serialize
 from asme.ops.services import work_orders
+from asme.ops.validation import validate
 from flask import request
 
 READ_KEYS = ("work_order.read_all", "work_order.read_assigned")
@@ -72,7 +73,8 @@ def _register_transition(action: str, permission: str) -> None:
     def view(work_order_id):
         ctx = policy.current_context()
         wo = work_orders.get_readable(ctx, work_order_id)
-        wo = work_orders.transition(ctx, wo, action, note=json_body().get("note"))
+        note = validate(json_body(), work_orders.TRANSITION_SPEC, partial=True).get("note")
+        wo = work_orders.transition(ctx, wo, action, note=note)
         return ok(_detail(wo))
 
     view.__name__ = f"{action}_work_order"
@@ -104,8 +106,8 @@ def complete_work_order(work_order_id):
         ctx,
         wo,
         note=body.get("note"),
-        time_entries=body.get("time_entries") or (),
-        cost_entries=body.get("cost_entries") or (),
+        time_entries=body.get("time_entries"),
+        cost_entries=body.get("cost_entries"),
         asset_status=body.get("asset_status"),
         follow_up=body.get("follow_up"),
     )

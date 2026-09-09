@@ -22,9 +22,10 @@ def list_changes():
     ctx = policy.current_context()
     params = {name: request.args.get(name) for name in FEED_PARAMS if name in request.args}
     feed = changes.list_changes(ctx, params)
+    include_payload = ctx.has("audit.read")
     return ok(
         {
-            "events": [change_event(event) for event in feed["events"]],
+            "events": [change_event(event, include_payload=include_payload) for event in feed["events"]],
             "has_more": feed["has_more"],
             "now": iso(feed["now"]),
             "next_since": iso(feed["next_since"]),

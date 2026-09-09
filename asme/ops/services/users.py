@@ -8,9 +8,18 @@ exception: making someone a ``chapter_admin`` also sets ``users.role = "admin"``
 so the legacy portal agrees about who administers the chapter. Demotions never
 touch it (``permissions.OPS_ROLES_IMPLYING_LEGACY_ADMIN``).
 
-Invitations reuse the legacy password-reset flow: the invitee receives a link
-to ``/reset-password/<token>``; their first sign-in flips the membership from
-``invited`` to ``active`` (``bootstrap.ensure_membership``).
+Invitations reuse the legacy password-reset flow, but **only for accounts this
+call creates**: a set-password link is a credential for the account it points
+at, so handing one to the inviter for an e-mail that already belongs to a live
+account (a legacy portal user, a member of another chapter, a suspended member)
+would be an account takeover. Someone who already has an account is added to
+the chapter and signs in with the password they already use; the response says
+so with ``invite_url = null``. Re-sending a lost invitation is deliberately not
+supported here - use the legacy Members page, which audits it as its own act.
+
+A new invitee receives a link to ``/reset-password/<token>``; their first
+sign-in flips the membership from ``invited`` to ``active``
+(``bootstrap.ensure_membership``).
 """
 
 from __future__ import annotations
@@ -28,9 +37,9 @@ from asme.ops.models import Membership, Role, Team, TeamMember
 from asme.ops.models.identity import MEMBER_STATUSES
 from asme.ops.services import audit_events, notifications
 from asme.ops.types import parse_uuid
-from asme.ops.validation import Field, ValidationErrors, validate
+from asme.ops.validation import INT_MAX, INT_MIN, Field, ValidationErrors, validate
 from asme.services import identity
-from asme.services.errors import Conflict, NotFound, Validation
+from asme.services.errors import Conflict, Forbidden, NotFound, Validation
 
 DIRECTORY_PERMISSIONS = ("team.read", "user.read")
 FILTERS = {"role": "multi", "status": "multi", "team": "multi"}
@@ -44,6 +53,8 @@ LEGACY_ROLE_FOR_OPS = {"chapter_admin": "admin", "team_lead": "team_leader"}
 UNKNOWN_ROLE = "Unknown role."
 ROLE_KEY_OR_ID = "Provide either role_key or role_id, not both."
 NOTHING_TO_UPDATE = "Provide role_key, role_id, status or title."
+ADMIN_GRANT_DENIED = "Only a Chapter Administrator can grant the Chapter Administrator role."
+INACTIVE_ACCOUNT = "That account is deactivated. Reactivate it in the members admin before inviting them."
 
 INVITE_SPEC = {
     "email": Field("email", required=True, nullable=False, max_len=160),
@@ -146,6 +157,14 @@ def teams_for_users(ctx, user_ids) -> dict[int, list[Team]]:
 
 
 def _membership_or_404(ctx, user_id) -> Membership:
+    # Flask's <int:...> converter happily parses an id far larger than the
+    # column, which the driver then refuses; no such member can exist.
+    try:
+        user_id = int(user_id)
+    except (TypeError, ValueError):
+        raise NotFound()
+    if not (INT_MIN <= user_id <= INT_MAX):
+        raise NotFound()
     membership = Membership.query.filter_by(organization_id=ctx.org.id, user_id=user_id).first()
     if membership is None:
         raise NotFound()
@@ -223,23 +242,29 @@ def _sync_legacy_admin(user, role: Role) -> None:
 # --------------------------------------------------------------------------- invite
 
 
-def invite(ctx, payload: dict) -> tuple[Membership, str]:
-    """Invite ``payload["email"]`` into the chapter. Returns the membership and
-    the password-reset token that forms the invite link.
+def invite(ctx, payload: dict) -> tuple[Membership, str | None]:
+    """Invite ``payload["email"]`` into the chapter.
 
-    * unknown e-mail: a legacy ``User`` is created with a random password and
-      an ``invited`` membership;
-    * known e-mail without a membership: one is created (active when the account
-      can already sign in);
+    Returns the membership and, **only when this call created the account**, the
+    password-reset token that forms the invite link (``None`` otherwise - see the
+    module docstring for why an existing account never yields one).
+
+    * unknown e-mail: a legacy ``User`` is created with a random password and an
+      ``invited`` membership, and a set-password link is issued;
+    * known e-mail without a membership: one is created; the person signs in with
+      their existing credentials;
     * known e-mail with an ``invited``/``suspended`` membership: it is (re)set to
-      ``invited``, a deactivated account is re-enabled, and a fresh link issued;
-    * known e-mail with an active membership: 409 ``already_member``.
+      ``invited``; no new credential is minted;
+    * known e-mail with an active membership: 409 ``already_member``;
+    * deactivated account: 409 ``inactive_account`` - reactivating someone is a
+      deliberate act, not a side effect of an invitation.
     """
     policy.authorize(ctx, "user.manage")
     data = validate(payload, INVITE_SPEC)
     role = bootstrap.role_by_key(ctx.org, data["role_key"])
     if role is None:
         raise ValidationErrors({"role_key": UNKNOWN_ROLE})
+    _guard_admin_grant(ctx, role)
     email = data["email"]
     user = User.query.filter(func.lower(User.email) == email).first()
     created_user = created_membership = False
@@ -251,10 +276,10 @@ def invite(ctx, payload: dict) -> tuple[Membership, str]:
             membership = bootstrap.ensure_membership(user, ctx.org, commit=False)
             membership.created_by_user_id = ctx.user.id
             created_membership = True
+        if not user.is_active:
+            raise Conflict(INACTIVE_ACCOUNT, code="inactive_account")
         if membership.member_status != "active":
             membership.member_status = "invited"
-        if not user.is_active:
-            user.is_active = True
     else:
         user = User(
             name=data["name"][:160],
@@ -292,15 +317,32 @@ def invite(ctx, payload: dict) -> tuple[Membership, str]:
         email=user.email,
         created_user=created_user,
         created_membership=created_membership,
+        link_issued=created_user,
     )
-    # Adds the reset token, records the legacy audit line and commits everything above.
-    token = identity.admin_invite_link_token(user, ctx.user)
+    token = None
+    if created_user:
+        # Adds the reset token, records the legacy audit line and commits everything above.
+        token = identity.admin_invite_link_token(user, ctx.user)
+    else:
+        db.session.commit()
     if created_membership:
         events.emit(events.MEMBERSHIP_CREATED, membership_id=str(membership.id), organization_id=str(ctx.org.id), user_id=user.id)
     return membership, token
 
 
 # --------------------------------------------------------------------------- update
+
+
+def _guard_admin_grant(ctx, role: Role | None) -> None:
+    """Handing out ``chapter_admin`` is a ``role.manage`` act.
+
+    ``user.manage`` alone (an executive officer) may move people between the
+    other roles, but not mint the role that holds ``role.manage`` and
+    ``chapter.settings.manage`` - otherwise those two withheld permissions are
+    one invitation away, plus legacy portal admin through ``_sync_legacy_admin``.
+    """
+    if role is not None and role.system_key == "chapter_admin" and not ctx.is_chapter_admin:
+        raise Forbidden(ADMIN_GRANT_DENIED, permission="role.manage")
 
 
 def update(ctx, user_id, payload: dict) -> Membership:
@@ -324,6 +366,8 @@ def update(ctx, user_id, payload: dict) -> Membership:
             errors["role_id"] = UNKNOWN_ROLE
     if errors:
         raise ValidationErrors(errors)
+    if new_role is not None and new_role.id != membership.role_id:
+        _guard_admin_grant(ctx, new_role)
 
     role_changes = new_role is not None and new_role.id != membership.role_id
     status_changes = "status" in data and data["status"] != membership.member_status

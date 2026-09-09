@@ -26,11 +26,18 @@ def iso(value) -> str | None:
 
 
 def money(value) -> float | None:
+    """Money as a JSON number. Non-finite values (which validation rejects, but
+    which historical rows may still hold) serialize as ``null`` rather than the
+    bare ``NaN``/``Infinity`` literals, which are not valid JSON."""
     if value is None:
         return None
     if isinstance(value, Decimal):
-        return float(value)
-    return float(value)
+        return float(value) if value.is_finite() else None
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number == number and number not in (float("inf"), float("-inf")) else None
 
 
 def uid(value) -> str | None:

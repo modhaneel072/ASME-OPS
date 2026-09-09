@@ -24,6 +24,13 @@ from asme.services.errors import ServiceError
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
 MISSING = object()
 
+# Bounds for numbers arriving from clients. Integer columns are 32-bit on
+# PostgreSQL and money columns are Numeric(12, 2); rejecting out-of-range values
+# during validation turns a 500 at INSERT time into a field error.
+INT_MIN = -(2**31)
+INT_MAX = 2**31 - 1
+MONEY_MAX = Decimal("9999999999.99")
+
 
 class ValidationErrors(ServiceError):
     def __init__(self, errors: dict[str, str], message: str = "Please fix the highlighted fields."):
@@ -93,10 +100,18 @@ def _coerce(name: str, spec: Field, raw):
     if kind == "int":
         if isinstance(raw, bool):
             raise ValueError("Must be a whole number.")
+        if isinstance(raw, float) and (raw != raw or raw in (float("inf"), float("-inf")) or not raw.is_integer()):
+            # JSON allows the bare literals Infinity and NaN, and 1e30 arrives as a float.
+            raise ValueError("Must be a whole number.")
         try:
             value = int(raw)
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, OverflowError):
             raise ValueError("Must be a whole number.")
+        # Every integer column here is a 32-bit INTEGER on PostgreSQL, so keep
+        # client values inside that range instead of failing at INSERT time.
+        # A field's own minimum/maximum narrows this further, below.
+        if not (INT_MIN <= value <= INT_MAX):
+            raise ValueError(f"Must be between {INT_MIN} and {INT_MAX}.")
     elif kind == "decimal":
         if isinstance(raw, bool):
             raise ValueError("Must be a number.")
@@ -104,6 +119,12 @@ def _coerce(name: str, spec: Field, raw):
             value = Decimal(str(raw))
         except (InvalidOperation, ValueError):
             raise ValueError("Must be a number.")
+        if not value.is_finite():
+            # NaN and Infinity survive Decimal() and would poison both the
+            # Numeric(12, 2) column and the JSON we emit.
+            raise ValueError("Must be a number.")
+        if spec.maximum is None and abs(value) > MONEY_MAX:
+            raise ValueError(f"Must be at most {MONEY_MAX}.")
     elif kind == "bool":
         if isinstance(raw, bool):
             return raw
@@ -151,10 +172,13 @@ def _coerce(name: str, spec: Field, raw):
     else:  # pragma: no cover - programming error
         raise RuntimeError(f"unknown field kind {kind}")
 
-    if spec.minimum is not None and value < spec.minimum:
-        raise ValueError(f"Must be at least {spec.minimum}.")
-    if spec.maximum is not None and value > spec.maximum:
-        raise ValueError(f"Must be at most {spec.maximum}.")
+    try:
+        if spec.minimum is not None and value < spec.minimum:
+            raise ValueError(f"Must be at least {spec.minimum}.")
+        if spec.maximum is not None and value > spec.maximum:
+            raise ValueError(f"Must be at most {spec.maximum}.")
+    except (InvalidOperation, TypeError):
+        raise ValueError("Must be a number.")
     return value
 
 

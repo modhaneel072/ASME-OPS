@@ -1,12 +1,24 @@
 """Change feed: audit events since a timestamp, limited to what the caller may read.
 
 Polling clients call ``GET /changes?since=`` and advance ``since`` to the
-``next_since`` they get back. Visibility is enforced per entity type:
+``next_since`` they get back.
+
+Visibility is **deny by default**: an entity type with no rule below is not
+delivered, so a new audited entity cannot leak simply by existing.
 
 * ``work_order`` – the id must come from ``work_orders.visible_work_orders_query``;
 * ``project`` – the project must pass ``policy.visible_project_filter``;
 * ``milestone`` – the milestone's project must pass the same filter;
-* everything else is chapter-wide.
+* ``asset`` – the asset must be readable (private-project assets are hidden);
+* ``comment`` / ``attachment`` – resolved through the entity they hang off;
+* ``saved_filter`` – the caller's own, or one shared with them;
+* ``membership`` – only with ``user.manage``/``audit.read``, plus the caller's own;
+* chapter-wide reference data (locations, categories, asset types, vendors,
+  teams, the chapter itself) – any member holding the matching read permission.
+
+The feed is a poll trigger, not an audit viewer: ``before``/``after``/
+``metadata`` are only serialized for callers holding ``audit.read``
+(``asme.ops.serializers.notifications.change_event``).
 
 ``ops_audit_events.entity_id`` is a hyphenated string while the entity tables
 use ``Uuid`` columns (32-hex on SQLite, native on PostgreSQL), so the check is
@@ -36,7 +48,16 @@ DEFAULT_LIMIT = 100
 MAX_LIMIT = 200
 SCAN_BATCH = 200
 MAX_SCAN_BATCHES = 10
-GUARDED_ENTITY_TYPES = ("work_order", "project", "milestone")
+# Reference data the whole chapter works from: knowing it changed is safe for
+# anyone holding the matching read permission (``None`` = every member).
+CHAPTER_WIDE_ENTITY_TYPES: dict[str, str | None] = {
+    "organization": None,
+    "location": "location.read",
+    "category": "category.read",
+    "asset_type": "asset.read",
+    "vendor": "vendor.read",
+    "team": "team.read",
+}
 
 FEED_SPEC = {
     "since": Field("datetime", required=True, nullable=False),
@@ -102,20 +123,22 @@ def _batch(ctx, since: datetime, after: AuditEvent | None, size: int) -> list[Au
 def _visible(ctx, rows: list[AuditEvent]) -> list[AuditEvent]:
     wanted: dict[str, set[str]] = defaultdict(set)
     for row in rows:
-        if row.entity_type in GUARDED_ENTITY_TYPES:
-            wanted[row.entity_type].add(row.entity_id)
-    readable: dict[str, set[str]] = {}
-    if wanted.get("work_order"):
-        readable["work_order"] = _readable_work_order_ids(ctx, wanted["work_order"])
-    if wanted.get("project"):
-        readable["project"] = _readable_project_ids(ctx, wanted["project"])
-    if wanted.get("milestone"):
-        readable["milestone"] = _readable_milestone_ids(ctx, wanted["milestone"])
-    return [
-        row
-        for row in rows
-        if row.entity_type not in GUARDED_ENTITY_TYPES or row.entity_id in readable.get(row.entity_type, ())
-    ]
+        wanted[row.entity_type].add(row.entity_id)
+    readable = {entity_type: _readable_ids(ctx, entity_type, ids) for entity_type, ids in wanted.items()}
+    return [row for row in rows if row.entity_id in readable.get(row.entity_type, ())]
+
+
+def _readable_ids(ctx, entity_type: str, ids: set[str]) -> set[str]:
+    """Which of ``ids`` of ``entity_type`` this caller may know about.
+
+    Anything without an explicit rule returns nothing: a type nobody has
+    reasoned about must not reach the feed.
+    """
+    if entity_type in CHAPTER_WIDE_ENTITY_TYPES:
+        permission = CHAPTER_WIDE_ENTITY_TYPES[entity_type]
+        return set(ids) if permission is None or ctx.has(permission) else set()
+    resolver = _RESOLVERS.get(entity_type)
+    return resolver(ctx, ids) if resolver else set()
 
 
 def _uuids(raw_ids) -> list[UUID]:
@@ -161,3 +184,97 @@ def _readable_milestone_ids(ctx, raw_ids) -> set[str]:
         )
     )
     return {str(value) for value in db.session.scalars(stmt)}
+
+
+def _readable_asset_ids(ctx, raw_ids) -> set[str]:
+    """Assets are hidden when they belong to a project the caller cannot read."""
+    from asme.ops.models import Asset
+    from asme.ops.services.assets import visible_assets_query
+
+    ids = _uuids(raw_ids)
+    if not ids or not ctx.has("asset.read"):
+        return set()
+    query = visible_assets_query(ctx).filter(Asset.id.in_(ids)).with_entities(Asset.id)
+    return {str(row[0]) for row in query.all()}
+
+
+def _readable_saved_filter_ids(ctx, raw_ids) -> set[str]:
+    """Own filters, plus ones shared with the whole chapter or with a team the
+    caller belongs to."""
+    from asme.ops.models import SavedFilter
+
+    ids = _uuids(raw_ids)
+    if not ids:
+        return set()
+    shared = [SavedFilter.visibility == "chapter"]
+    if ctx.team_ids:
+        shared.append(and_(SavedFilter.visibility == "team", SavedFilter.team_id.in_(list(ctx.team_ids))))
+    stmt = select(SavedFilter.id).where(
+        SavedFilter.organization_id == ctx.org.id,
+        SavedFilter.id.in_(ids),
+        or_(SavedFilter.owner_user_id == ctx.user.id, *shared),
+    )
+    return {str(value) for value in db.session.scalars(stmt)}
+
+
+def _readable_membership_ids(ctx, raw_ids) -> set[str]:
+    """Who joined, changed role or was suspended is directory administration;
+    without ``user.manage``/``audit.read`` a member only sees their own."""
+    from asme.ops.models import Membership
+
+    ids = _uuids(raw_ids)
+    if not ids:
+        return set()
+    if ctx.has("user.manage") or ctx.has("audit.read"):
+        stmt = select(Membership.id).where(Membership.organization_id == ctx.org.id, Membership.id.in_(ids))
+    else:
+        stmt = select(Membership.id).where(
+            Membership.organization_id == ctx.org.id, Membership.id.in_(ids), Membership.user_id == ctx.user.id
+        )
+    return {str(value) for value in db.session.scalars(stmt)}
+
+
+def _readable_child_ids(model):
+    """Comments and attachments inherit the visibility of what they hang off."""
+
+    def resolve(ctx, raw_ids) -> set[str]:
+        ids = _uuids(raw_ids)
+        if not ids:
+            return set()
+        rows = db.session.scalars(select(model).where(model.organization_id == ctx.org.id, model.id.in_(ids))).all()
+        by_parent_type: dict[str, set[str]] = defaultdict(set)
+        for row in rows:
+            by_parent_type[row.entity_type].add(str(row.entity_id))
+        readable_parents = {
+            parent_type: _readable_ids(ctx, parent_type, parent_ids) for parent_type, parent_ids in by_parent_type.items()
+        }
+        return {str(row.id) for row in rows if str(row.entity_id) in readable_parents.get(row.entity_type, ())}
+
+    return resolve
+
+
+def _build_resolvers() -> dict:
+    from asme.ops.models import Attachment, Comment
+
+    return {
+        "work_order": _readable_work_order_ids,
+        "project": _readable_project_ids,
+        "milestone": _readable_milestone_ids,
+        "asset": _readable_asset_ids,
+        "saved_filter": _readable_saved_filter_ids,
+        "membership": _readable_membership_ids,
+        "comment": _readable_child_ids(Comment),
+        "attachment": _readable_child_ids(Attachment),
+    }
+
+
+class _Resolvers(dict):
+    """Built on first use so importing this module stays cycle-free."""
+
+    def get(self, key, default=None):
+        if not self:
+            self.update(_build_resolvers())
+        return super().get(key, default)
+
+
+_RESOLVERS = _Resolvers()

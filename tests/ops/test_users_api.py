@@ -252,17 +252,29 @@ def test_invite_existing_users(client, org, users, api_login, captured_events):
     assert User.query.filter_by(email="old@uiowa.edu").count() == 1
     assert any(name == event_bus.MEMBERSHIP_CREATED and payload["user_id"] == legacy.id for name, payload in captured_events)
 
+    # An account that already exists keeps its own credentials: no link, no reset token.
+    assert joined.get_json()["payload"]["invite_url"] is None
+    assert PasswordResetToken.query.filter_by(user_id=legacy.id).count() == 0
+
     again = client.post("/api/v1/users/invite", json={"email": "ivy@uiowa.edu", "name": "Ivy", "role_key": "shop_operator"})
     assert again.status_code == 201
     assert again.get_json()["payload"]["member"]["status"] == "invited"
+    assert again.get_json()["payload"]["invite_url"] is None
     assert _membership(org, invited).role.system_key == "shop_operator"
-    assert PasswordResetToken.query.filter_by(user_id=invited.id).count() == 1
+    assert PasswordResetToken.query.filter_by(user_id=invited.id).count() == 0
     assert Membership.query.filter_by(user_id=invited.id).count() == 1
 
+    # Reactivating a disabled account is a deliberate admin act, never an invitation side effect.
     revived = client.post("/api/v1/users/invite", json={"email": "dee@uiowa.edu", "name": "Dee"})
-    assert revived.status_code == 201
-    assert revived.get_json()["payload"]["member"]["status"] == "invited"
-    assert deactivated.is_active is True
+    assert revived.status_code == 409 and revived.get_json()["code"] == "inactive_account"
+    assert deactivated.is_active is False
+
+    # A brand-new account is the only case that mints a set-password link.
+    fresh = client.post("/api/v1/users/invite", json={"email": "fresh@uiowa.edu", "name": "Fresh Face"})
+    assert fresh.status_code == 201
+    fresh_user = User.query.filter_by(email="fresh@uiowa.edu").one()
+    assert "/reset-password/" in fresh.get_json()["payload"]["invite_url"]
+    assert PasswordResetToken.query.filter_by(user_id=fresh_user.id).count() == 1
 
     promoted = client.post("/api/v1/users/invite", json={"email": "old@uiowa.edu", "name": "Old Timer", "role_key": "chapter_admin"})
     assert promoted.status_code == 409 and promoted.get_json()["code"] == "already_member"

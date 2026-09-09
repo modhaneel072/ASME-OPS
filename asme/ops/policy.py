@@ -263,6 +263,8 @@ def require_permission(*keys: str, any_of: bool = False):
                     return _deny(403, "forbidden", "You do not have permission to do that.", permission=list(keys))
             return view_func(*args, **kwargs)
 
+        wrapped.ops_permissions = tuple(keys)  # introspected by docs generators
+        wrapped.ops_permissions_any_of = any_of
         return wrapped
 
     return decorator

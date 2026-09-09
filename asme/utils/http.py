@@ -6,9 +6,27 @@ from flask import jsonify, redirect, request, url_for
 
 
 def request_client_ip():
-    forwarded = (request.headers.get("X-Forwarded-For") or "").strip()
-    if forwarded:
-        return forwarded.split(",")[0].strip()[:120]
+    """The peer address used for rate limiting and audit records.
+
+    ``X-Forwarded-For`` is written by the client unless a proxy we trust
+    appended to it, so it is only consulted when ``ASME_TRUSTED_PROXY_COUNT``
+    says how many proxies sit in front of the app. With ``n`` trusted proxies
+    the client address is the ``n``-th entry counted from the right; everything
+    further left was supplied by whoever made the request and must not be
+    trusted. With the default of ``0`` the socket peer is used, which is the
+    only address nobody can forge.
+    """
+    trusted = 0
+    try:
+        from asme.config import settings
+
+        trusted = max(0, int(settings().trusted_proxy_count))
+    except (RuntimeError, KeyError, AttributeError, ValueError):
+        trusted = 0
+    if trusted:
+        chain = [part.strip() for part in (request.headers.get("X-Forwarded-For") or "").split(",") if part.strip()]
+        if chain:
+            return chain[max(0, len(chain) - trusted)][:120]
     return (request.remote_addr or "unknown")[:120]
 
 

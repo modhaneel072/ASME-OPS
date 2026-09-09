@@ -186,6 +186,10 @@ COMPLETE_SPEC = {
     "follow_up": Field("json"),
 }
 DEPENDENCY_SPEC = {"blocking_work_order_id": Field("uuid", required=True, nullable=False)}
+# Body of the plain transition endpoints (start/hold/resume/cancel/reopen).
+TRANSITION_SPEC = {"note": Field("text", max_len=4000)}
+# Payload keys that decide who works on a work order; they need work_order.assign.
+ASSIGNMENT_FIELDS = frozenset({"assignee_user_ids", "assignee_team_ids", "watcher_user_ids", "team_id"})
 
 LIST_FILTERS = {
     "status": "multi",
@@ -808,6 +812,12 @@ def create(ctx, data: dict, *, parent: WorkOrder | None = None) -> WorkOrder:
 def update(ctx, wo: WorkOrder, data: dict) -> WorkOrder:
     policy.authorize(ctx, "work_order.edit", wo)
     cleaned = validate(data, UPDATE_SPEC, partial=True)
+    # Who a work order is assigned to (and which team owns it) is governed by
+    # work_order.assign, not work_order.edit: a full member may edit their own
+    # work order but must not put it on someone else's plate or move it under a
+    # team whose lead would then inherit scope over it.
+    if ASSIGNMENT_FIELDS & cleaned.keys():
+        policy.authorize(ctx, "work_order.assign", wo)
     publish = False
     if "status" in cleaned:
         target = cleaned.pop("status")
@@ -900,9 +910,11 @@ def complete(
     policy.authorize(ctx, "work_order.complete", wo)
     body = validate(
         {
+            # Pass the client's values through untouched so a number or boolean
+            # is answered with a field error instead of a TypeError.
             "note": note,
-            "time_entries": list(time_entries or []),
-            "cost_entries": list(cost_entries or []),
+            "time_entries": [] if time_entries is None else time_entries,
+            "cost_entries": [] if cost_entries is None else cost_entries,
             "asset_status": asset_status,
             "follow_up": follow_up,
         },

@@ -52,7 +52,9 @@ def get_user(user_id):
 def invite_user():
     ctx = policy.current_context()
     membership, token = users.invite(ctx, json_body())
-    invite_url = url_for("auth.reset_password_page", token=token, _external=True)
+    # A link is only minted for an account this request created; an existing
+    # account keeps its own credentials (see asme.ops.services.users).
+    invite_url = url_for("auth.reset_password_page", token=token, _external=True) if token else None
     return ok({"member": _member_with_teams(ctx, membership), "invite_url": invite_url}, status=201)
 
 

@@ -33,7 +33,17 @@ def notification(row) -> dict:
     }
 
 
-def change_event(event) -> dict:
+def change_event(event, *, include_payload: bool = False) -> dict:
+    """One entry of the change feed.
+
+    The feed exists so a client knows *what* to refetch, so the audit payload
+    (``before``/``after``/``metadata``) is withheld unless the caller holds
+    ``audit.read`` - otherwise polling would become a way to read field-level
+    history that the entity's own endpoints gate.
+    """
     data = audit_event(event)
+    if not include_payload:
+        for key in ("before", "after", "metadata"):
+            data.pop(key, None)
     data["href"] = entity_href(event.entity_type, event.entity_id)
     return data
