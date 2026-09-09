@@ -2,6 +2,7 @@
 
     python manage.py upgrade      # migrate to head (stamps legacy DBs) + seed defaults
     python manage.py seed         # seed defaults only
+    python manage.py seed-ops [--reset]   # dev-only ASME Ops demo dataset (prints credentials); --reset rebuilds it
     python manage.py evaluate     # re-run the Launchpad engine for everyone
     python manage.py reconcile    # file stock discrepancies
     python manage.py worker       # dedicated outbox worker loop
@@ -34,6 +35,12 @@ def main(argv):
             return 0
         if command == "seed":
             print("seed:", bootstrap.seed_defaults())
+            return 0
+        if command == "seed-ops":
+            from asme.ops import seeds
+
+            flags = {arg.strip().lower() for arg in argv[2:]}
+            seeds.seed_ops(reset=bool(flags & {"--reset", "--reset-ops"}))
             return 0
         if command == "evaluate":
             from asme.models import User
