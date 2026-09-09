@@ -101,6 +101,21 @@ Progress is derived, never stored as a number: every domain event (checkout, ret
 
 Pages: `/portal/member/launchpad`, `/portal/leader/launchpad` (sign-offs, training), `/portal/admin/launchpad` (chapter track, overrides, re-evaluate).
 
+## ASME Ops (operations platform)
+
+ASME Ops is the chapter's operations workspace: projects, work orders, teams, locations, categories, assets, vendors, comments, files, notifications, saved filters, global search and an operations report, with organization scoping, twelve scoped roles and an immutable audit trail. It lives inside this application (see `docs/decisions/ADR-0001-transitional-architecture.md`):
+
+- backend package `asme/ops/` (models on `ops_*` tables, permission registry + policy engine, services, storage, seeds) exposed through `/api/v1` (`docs/api.md`, `docs/permissions-matrix.md`);
+- React + TypeScript frontend in `apps/ops-web/`, built into `static/ops/` and served at `/app`.
+
+```powershell
+python manage.py upgrade            # migrations (0003_ops_foundation) + default organization/roles/memberships
+python manage.py seed-ops           # development-only demo data (Crater Cruncher Rover, teams, ~40 work orders)
+cd apps/ops-web; npm ci; npm run build   # bundle -> static/ops ; or `npm run dev` for :5173 with API proxy
+```
+
+Existing accounts keep working: `admin` → Chapter Administrator, `team_leader` → Team Lead, `member` → Full Member on first sign-in at `/app`. Docs: `docs/architecture/overview.md`, `docs/implementation-status.md`, `docs/migration-plan.md`, `docs/test-plan.md`, `docs/deployment.md`, `docs/reporting-metrics.md`, `docs/seed-data.md`.
+
 ## API v1
 
 Versioned JSON under `/api/v1`. One error shape everywhere: `{"ok": false, "code": "...", "error": "..."}`; a missing entitlement returns `403` with `entitlement` and the `phase` that unlocks it. Collections use cursor pagination; `/items` sends an `ETag`.

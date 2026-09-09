@@ -1,1 +1,0 @@
-import{lt as e}from"./ui-CFDT0wu0.js";import{t}from"./index-BSRQ8gg_.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Categories`,stage:1,description:`Category list and detail with usage counts.`})}export{r as default};

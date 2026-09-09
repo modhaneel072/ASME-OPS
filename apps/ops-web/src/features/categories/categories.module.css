@@ -1,0 +1,233 @@
+/* Icon tile ----------------------------------------------------------------- */
+.tile {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.tile_sm {
+  width: 22px;
+  height: 22px;
+}
+
+.tile_lg {
+  width: 44px;
+  height: 44px;
+}
+
+/* List rows ----------------------------------------------------------------- */
+.rowUsage {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Detail -------------------------------------------------------------------- */
+.titleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.inlineValue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatchDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: var(--border-width) solid var(--color-border-strong);
+  flex: none;
+}
+
+.usage {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.usageNumber {
+  font-size: var(--text-page-title);
+  font-weight: var(--text-page-title-weight);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.usageHint {
+  margin-top: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+/* Form ---------------------------------------------------------------------- */
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-subtle);
+}
+
+.previewName {
+  font-weight: var(--text-label-weight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.previewMeta {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.hiddenInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.swatch {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--control-height);
+  height: var(--control-height);
+  cursor: pointer;
+}
+
+.swatchFill {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: var(--border-width) solid var(--color-border-strong);
+  color: var(--color-text-inverse);
+  transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.swatch:hover .swatchFill {
+  transform: scale(1.08);
+}
+
+.swatch input:checked + .swatchFill {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.swatch input:focus-visible + .swatchFill {
+  box-shadow: var(--shadow-focus);
+}
+
+.hexField {
+  display: grid;
+  gap: 6px;
+  max-width: 220px;
+}
+
+.hexCaption {
+  font-size: var(--text-caption);
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-secondary);
+}
+
+.iconSearch {
+  margin-bottom: var(--space-2);
+}
+
+.iconNote {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+
+.iconGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  gap: var(--space-2);
+  max-height: 264px;
+  overflow-y: auto;
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.iconOption {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+
+.iconCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  transition:
+    background-color var(--motion-fast) var(--ease-out),
+    border-color var(--motion-fast) var(--ease-out);
+}
+
+.iconOption:hover .iconCard {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.iconOption input:checked + .iconCard {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-active);
+}
+
+.iconOption input:focus-visible + .iconCard {
+  box-shadow: var(--shadow-focus);
+}
+
+.iconOptionLabel {
+  max-width: 100%;
+  font-size: var(--text-group-label);
+  line-height: var(--leading-snug);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconEmpty {
+  grid-column: 1 / -1;
+  padding: var(--space-4);
+  font-size: var(--text-label);
+  color: var(--color-text-muted);
+  text-align: center;
+}

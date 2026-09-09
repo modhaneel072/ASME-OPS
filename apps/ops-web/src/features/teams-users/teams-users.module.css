@@ -1,0 +1,269 @@
+/* Teams / Users screen. Every colour, size and radius comes from tokens.css. */
+
+/* Tab strip under the page header ---------------------------------------- */
+.tabStrip {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 var(--content-padding);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* The strip draws the full-width rule; the tablist must not add a second one. */
+.tabStrip [role='tablist'] {
+  border-bottom: 0;
+}
+
+/* Filter chips (Users tab) ----------------------------------------------- */
+.filterStrip {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--content-padding);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+@media (max-width: 899px) {
+  .filterStrip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+}
+
+/* Rows and detail bits ---------------------------------------------------- */
+.inlineTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.titleWithAvatar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.chips {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.rowTrailing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.hint {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.staticControl {
+  display: flex;
+  align-items: center;
+  min-height: var(--control-height);
+}
+
+/* Forms and dialogs -------------------------------------------------------- */
+.formGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.leadList {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.leadLegend {
+  padding: 0;
+  margin-bottom: var(--space-1);
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-primary);
+}
+
+.inviteUrlRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.inviteUrlRow > input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+}
+
+.formFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Roles matrix ------------------------------------------------------------- */
+.rolesPane {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--content-padding) var(--space-10);
+}
+
+.rolesIntro {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 880px;
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+}
+
+.legend > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.legend dt,
+.legend dd {
+  margin: 0;
+}
+
+.legend dd {
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.scope {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-active);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  text-decoration: none;
+  cursor: help;
+}
+
+.matrixWrap {
+  position: relative;
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-surface);
+}
+
+.matrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  font-size: var(--text-table);
+}
+
+.matrix th,
+.matrix td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.matrix thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--color-bg-subtle);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  color: var(--color-text-secondary);
+}
+
+.matrix .stickyCol {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--color-bg-surface);
+  text-align: left;
+  border-right: 1px solid var(--color-border);
+}
+
+.matrix thead .stickyCol {
+  z-index: 3;
+  background: var(--color-bg-subtle);
+}
+
+.matrix .groupRow th,
+.matrix .groupRow td {
+  background: var(--color-bg-subtle);
+  font-size: var(--text-group-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.permKey code {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-text-primary);
+}
+
+.roleHead {
+  min-width: 96px;
+}
+
+.roleName {
+  display: block;
+  margin: 0 auto;
+  max-width: 120px;
+  white-space: normal;
+}
+
+.roleCount {
+  display: block;
+  font-weight: 450;
+  color: var(--color-text-muted);
+}
+
+.noAccess {
+  color: var(--color-text-disabled);
+}
+
+.matrix tbody tr:not(.groupRow):hover th,
+.matrix tbody tr:not(.groupRow):hover td {
+  background: var(--color-bg-hover);
+}

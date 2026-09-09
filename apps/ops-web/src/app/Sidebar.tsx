@@ -1,6 +1,7 @@
-import { ChevronRight, ExternalLink, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, Settings2, UserRound } from 'lucide-react'
+import { Bell, ChevronRight, ExternalLink, LifeBuoy, LogOut, PanelLeftClose, PanelLeftOpen, Settings2, UserRound } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { useUnreadNotificationCount } from '@/api/queries/notifications'
 import { useLogout } from '@/api/queries/session'
 import { cn } from '@/lib/cn'
 import { hasPermission, useSession } from '@/lib/permissions'
@@ -83,6 +84,9 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
   const session = useSession()
   const navigate = useNavigate()
   const logout = useLogout()
+  const unread = useUnreadNotificationCount(hasPermission(session, 'notification.read'))
+  const unreadCount = unread.data ?? 0
+  const notificationsLabel = unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'
 
   const visibleGroups = NAV_GROUPS.map((group) => ({
     ...group,
@@ -90,7 +94,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
   })).filter((group) => group.items.length > 0)
 
   return (
-    <aside className={cn(styles.sidebar, collapsed && styles.sidebar_collapsed, mobileOpen && styles.sidebar_open)} aria-label="Primary navigation">
+    <aside className={cn(styles.sidebar, collapsed && styles.sidebar_collapsed, mobileOpen && styles.sidebar_open)} aria-label="Sidebar">
       <div className={styles.brand}>
         <span className={styles.brandMark} aria-hidden="true">
           A
@@ -106,7 +110,7 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
         </IconButton>
       </div>
 
-      <nav className={styles.nav}>
+      <nav className={styles.nav} aria-label="Primary">
         {visibleGroups.map((group) => (
           <div key={group.key} className={styles.group}>
             <div className={styles.groupLabel}>{group.label}</div>
@@ -118,6 +122,28 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
       </nav>
 
       <div className={styles.footer}>
+        {collapsed ? (
+          <Tooltip content={notificationsLabel} side="right">
+            <NavLink to="/notifications" className={({ isActive }) => cn(styles.item, isActive && styles.item_active)} aria-label={notificationsLabel} onClick={onCloseMobile}>
+              <span className={styles.itemIcon}>
+                <Bell size={18} aria-hidden="true" />
+                {unreadCount > 0 && <span className={styles.dot} aria-hidden="true" />}
+              </span>
+            </NavLink>
+          </Tooltip>
+        ) : (
+          <NavLink to="/notifications" className={({ isActive }) => cn(styles.item, isActive && styles.item_active)} aria-label={notificationsLabel} onClick={onCloseMobile}>
+            <span className={styles.itemIcon}>
+              <Bell size={18} aria-hidden="true" />
+            </span>
+            <span className={styles.itemLabel}>Notifications</span>
+            {unreadCount > 0 && (
+              <span className={styles.countBadge} aria-hidden="true">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </NavLink>
+        )}
         {collapsed ? (
           <Tooltip content="Help / Support" side="right">
             <a href="/portal/member/help" className={styles.item} aria-label="Help / Support">

@@ -1,0 +1,1 @@
+import{yn as e}from"./ui-CdTsMCRY.js";import{t}from"./index-BHOq2LDy.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Requests`,stage:3,description:`Request submission, review, clarification, approval and conversion to work orders.`})}export{r as default};

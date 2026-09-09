@@ -236,49 +236,37 @@ export function FilterChip({ label, options, value, onChange, multiple = true, s
 
   return (
     <>
-      <button
-        ref={ref}
-        type="button"
-        className={cn(styles.chip, active && styles.chip_active)}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={open ? id : undefined}
-        onClick={() => {
-          if (!open) onOpen?.()
-          setOpen(!open)
-        }}
-      >
-        <span>{label}</span>
+      {/* The clear control is a sibling, not a child: a <button> may not contain
+          another interactive element, and nesting one makes the chip's own
+          accessible name ambiguous for screen readers. */}
+      <span className={cn(styles.chip, active && styles.chip_active)}>
+        <button
+          ref={ref}
+          type="button"
+          className={styles.chipTrigger}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          aria-controls={open ? id : undefined}
+          onClick={() => {
+            if (!open) onOpen?.()
+            setOpen(!open)
+          }}
+        >
+          <span>{label}</span>
+          {active && (
+            <>
+              <span aria-hidden="true">:</span>
+              <span className={styles.chipValue}>{summary}</span>
+            </>
+          )}
+          {!active && <ChevronDown size={14} aria-hidden="true" />}
+        </button>
         {active && (
-          <>
-            <span aria-hidden="true">:</span>
-            <span className={styles.chipValue}>{summary}</span>
-          </>
-        )}
-        {active ? (
-          <span
-            role="button"
-            tabIndex={0}
-            aria-label={`Clear ${label} filter`}
-            className={styles.chipClear}
-            onClick={(event) => {
-              event.stopPropagation()
-              onChange([])
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault()
-                event.stopPropagation()
-                onChange([])
-              }
-            }}
-          >
+          <button type="button" aria-label={`Clear ${label} filter`} className={styles.chipClear} onClick={() => onChange([])}>
             <X size={12} aria-hidden="true" />
-          </span>
-        ) : (
-          <ChevronDown size={14} aria-hidden="true" />
+          </button>
         )}
-      </button>
+      </span>
       <Popover open={open} onOpenChange={setOpen} anchor={anchor} id={id} role="dialog" labelledBy={undefined} className={styles.filterPanel}>
         <span className="sr-only">{label} filter</span>
         {searchable && (

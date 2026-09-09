@@ -1,5 +1,5 @@
-import { Info, Menu, X } from 'lucide-react'
-import { Suspense, useCallback, useEffect, useState } from 'react'
+import { Info, Menu, Search, X } from 'lucide-react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { useSetPreference } from '@/api/queries/session'
 import { cn } from '@/lib/cn'
@@ -11,6 +11,7 @@ import { Sidebar } from './Sidebar'
 import styles from './shell.module.css'
 
 const COLLAPSE_KEY = 'asme-ops.sidebar.collapsed'
+const CommandPalette = lazy(() => import('@/features/search').then((m) => ({ default: m.CommandPalette })))
 
 function readCollapsed(): boolean {
   try {
@@ -49,7 +50,19 @@ export function AppShell() {
     setLastPath(location.pathname)
     if (mobileOpen) setMobileOpen(false)
   }
+  const [paletteOpen, setPaletteOpen] = useState(false)
   useChangesPoller(session)
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault()
+        setPaletteOpen((open) => !open)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   const toggleCollapsed = useCallback(() => {
     setCollapsed((current) => {
@@ -84,6 +97,9 @@ export function AppShell() {
             <Menu size={20} />
           </IconButton>
           <span className={styles.topbarTitle}>ASME Ops</span>
+          <IconButton label="Search (Ctrl+K)" variant="ghost" onClick={() => setPaletteOpen(true)}>
+            <Search size={20} />
+          </IconButton>
         </div>
         {showBanner && <SetupBanner />}
         <main className={styles.content} id="main">
@@ -100,6 +116,11 @@ export function AppShell() {
           </ErrorBoundary>
         </main>
       </div>
+      {paletteOpen && (
+        <Suspense fallback={null}>
+          <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+        </Suspense>
+      )}
     </div>
   )
 }

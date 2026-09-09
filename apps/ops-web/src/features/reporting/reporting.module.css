@@ -1,0 +1,382 @@
+/* Operations dashboard. Only token references; no raw colours or arbitrary sizes. */
+
+/* Page ------------------------------------------------------------------- */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 1280px;
+  padding: var(--space-5) var(--content-padding) var(--space-12);
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.summary li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.summary li + li::before {
+  content: '·';
+  color: var(--color-text-disabled);
+}
+
+.summaryStrong {
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-primary);
+}
+
+.updating {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.stateWrap {
+  max-width: 720px;
+}
+
+/* Range control ----------------------------------------------------------- */
+.rangeGroup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+.rangePopover {
+  width: 360px;
+  max-width: calc(100vw - var(--space-4));
+  padding: var(--space-4);
+}
+
+.rangeForm {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.rangeHint {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.rangeFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* Legends ----------------------------------------------------------------- */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-label);
+  color: var(--color-text-secondary);
+}
+
+.legendItem,
+.legendLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-6);
+  color: inherit;
+}
+
+.legendLink {
+  color: var(--color-text-primary);
+  border-radius: var(--radius-sm);
+}
+
+.legendLink:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.legendValue {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.swatch {
+  width: var(--space-2);
+  height: var(--space-2);
+  border-radius: var(--radius-sm);
+  flex: none;
+}
+
+/* SVG charts -------------------------------------------------------------- */
+.chartHost {
+  width: 100%;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gridLine {
+  stroke: var(--color-border);
+  stroke-width: var(--border-width);
+}
+
+.axisText {
+  fill: var(--color-text-muted);
+  font-size: var(--text-caption);
+  font-family: var(--font-sans);
+}
+
+.chartEmpty {
+  padding: var(--space-6);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-body);
+}
+
+/* Horizontal bar rows ----------------------------------------------------- */
+.barRows {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(96px, 30%) 1fr var(--space-10);
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height-compact);
+  font-size: var(--text-label);
+}
+
+.barLabel {
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTrack {
+  display: block;
+  width: 100%;
+  height: var(--space-3);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.trackBg {
+  fill: var(--color-bg-subtle);
+}
+
+.barValue {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Segmented / stacked bar ------------------------------------------------- */
+.segmentBar {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.stackWrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding-top: var(--space-2);
+}
+
+.stackTotal {
+  font-size: var(--text-section);
+  font-weight: var(--text-section-weight);
+  line-height: var(--leading-tight);
+}
+
+.muted {
+  font-size: var(--text-label);
+  font-weight: var(--text-body-weight);
+  color: var(--color-text-muted);
+}
+
+.splitStat {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.statValue {
+  font-size: var(--text-section);
+  font-weight: var(--text-section-weight);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-tight);
+}
+
+.statLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.percentRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+
+/* Value cards ------------------------------------------------------------- */
+.explain {
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-normal);
+}
+
+.cardLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+}
+
+.caption {
+  margin-top: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+/* Team list under the workload chart ------------------------------------- */
+.teamList {
+  display: grid;
+  margin-top: var(--space-3);
+  font-size: var(--text-label);
+}
+
+.teamList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height-compact);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.teamCounts {
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Tables ------------------------------------------------------------------ */
+.tableWrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-table);
+}
+
+.table th {
+  padding: var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-border);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: left;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-border);
+  white-space: nowrap;
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.person {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tableFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-2);
+}
+
+/* Grid helpers ------------------------------------------------------------ */
+.tiles {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 699px) {
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.emptyCard {
+  grid-column: 1 / -1;
+  background: var(--color-bg-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.skeletonCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+}

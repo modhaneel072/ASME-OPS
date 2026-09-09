@@ -48,15 +48,17 @@ export function FormField({ label, children, hint, error, required, optionalLabe
   return (
     <FieldContext.Provider value={value}>
       <div className={cn(styles.field, className)} role={asGroup ? 'group' : undefined} aria-labelledby={asGroup ? `${id}-label` : undefined}>
-        <LabelTag id={`${id}-label`} htmlFor={asGroup ? undefined : id} className={styles.label}>
-          <span>{label}</span>
+        <div className={styles.label}>
+          <LabelTag id={`${id}-label`} htmlFor={asGroup ? undefined : id}>
+            {label}
+          </LabelTag>
           {required && (
             <span className={styles.required} aria-hidden="true">
               *
             </span>
           )}
           {optionalLabel && !required && <span className={styles.optional}>Optional</span>}
-        </LabelTag>
+        </div>
         {children}
         {hint && !error && (
           <p id={hintId} className={styles.hint}>

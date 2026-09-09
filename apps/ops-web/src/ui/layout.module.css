@@ -236,9 +236,8 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   height: var(--chip-height);
-  padding: 0 10px 0 12px;
+  padding-right: 4px;
   border: 1px dashed var(--color-border-strong);
   border-radius: var(--radius-pill);
   background: var(--color-bg-surface);
@@ -249,6 +248,26 @@
   transition:
     background-color var(--motion-fast) var(--ease-out),
     border-color var(--motion-fast) var(--ease-out);
+}
+
+.chipTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 0 8px 0 12px;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.chip:not(.chip_active) {
+  padding-right: 0;
+}
+
+.chip:not(.chip_active) .chipTrigger {
+  padding-right: 10px;
 }
 
 .chip:hover {
@@ -273,11 +292,11 @@
 .chipClear {
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 18px;
-  margin-left: 2px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   color: inherit;
+  flex: none;
 }
 
 .chipClear:hover {

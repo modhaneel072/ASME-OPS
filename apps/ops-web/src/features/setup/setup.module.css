@@ -1,0 +1,512 @@
+/* Setup Center: a scrolling welcome page with phase cards and a sticky progress panel. */
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Hero ---------------------------------------------------------------------- */
+.hero {
+  padding: var(--space-8) var(--content-padding) var(--space-6);
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.heroInner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.heroEyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  font-size: var(--text-group-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.heroTitle {
+  font-size: var(--text-page-title);
+  font-weight: var(--text-page-title-weight);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+}
+
+.heroSubtitle {
+  margin-top: var(--space-3);
+  max-width: 640px;
+  font-size: var(--text-card);
+  font-weight: var(--text-body-weight);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+/* Columns -------------------------------------------------------------------- */
+.body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--content-padding) var(--space-12);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas: 'main side';
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.main {
+  grid-area: main;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+}
+
+.side {
+  grid-area: side;
+  position: sticky;
+  top: var(--space-6);
+  min-width: 0;
+}
+
+@media (max-width: 1049px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'side'
+      'main';
+  }
+
+  .side {
+    position: static;
+  }
+}
+
+@media (max-width: 899px) {
+  .hero {
+    padding-top: var(--space-6);
+    padding-bottom: var(--space-5);
+  }
+
+  .heroTitle {
+    font-size: 24px;
+  }
+
+  .heroSubtitle {
+    font-size: var(--text-body);
+  }
+}
+
+/* Phase card ------------------------------------------------------------------ */
+.phase {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.phaseHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.phaseHeaderMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.phaseEyebrow {
+  margin-bottom: var(--space-1);
+  font-size: var(--text-group-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.phaseTitle {
+  font-size: var(--text-section);
+  font-weight: var(--text-section-weight);
+  line-height: var(--leading-snug);
+  letter-spacing: -0.01em;
+}
+
+.phaseDescription {
+  margin-top: var(--space-1);
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+}
+
+.phaseSummary {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.taskList {
+  display: flex;
+  flex-direction: column;
+}
+
+.taskList > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+/* Task card ------------------------------------------------------------------- */
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  transition: background-color var(--motion-fast) var(--ease-out);
+}
+
+.task:hover {
+  background: var(--color-bg-hover);
+}
+
+.task_unavailable:hover {
+  background: transparent;
+}
+
+.tile {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-lg);
+  background: var(--color-neutral-soft);
+  color: var(--color-neutral);
+}
+
+.tile_primary {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.tile_success {
+  background: var(--color-success-soft);
+  color: var(--color-success-text);
+}
+
+.tile_purple {
+  background: var(--color-purple-soft);
+  color: var(--color-purple);
+}
+
+.tile_gold {
+  background: var(--color-iowa-gold-soft);
+  color: var(--color-iowa-gold-text);
+}
+
+.tile_warning {
+  background: var(--color-warning-soft);
+  color: var(--color-warning-text);
+}
+
+.tile_neutral {
+  background: var(--color-neutral-soft);
+  color: var(--color-neutral);
+}
+
+.task_unavailable .tile {
+  background: var(--color-bg-subtle);
+  color: var(--color-text-disabled);
+}
+
+.taskBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.taskTitleRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.taskTitle {
+  font-size: var(--text-card);
+  font-weight: var(--text-card-weight);
+  line-height: var(--leading-snug);
+}
+
+.task_unavailable .taskTitle {
+  color: var(--color-text-secondary);
+}
+
+.taskDescription {
+  margin-top: 2px;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.task_unavailable .taskDescription {
+  color: var(--color-text-muted);
+}
+
+.taskMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-3);
+  margin-top: var(--space-2);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.taskMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.taskActions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+}
+
+.indicator {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+}
+
+.indicator_complete {
+  color: var(--color-success);
+}
+
+.indicator_incomplete {
+  color: var(--color-border-strong);
+}
+
+.indicator_unavailable {
+  color: var(--color-text-disabled);
+}
+
+.doneLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  color: var(--color-success-text);
+}
+
+.reviewLink {
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  padding: 0 var(--space-1);
+}
+
+.reviewLink:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
+@media (max-width: 599px) {
+  .task {
+    flex-wrap: wrap;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .taskActions {
+    width: 100%;
+    min-height: 0;
+    padding-left: calc(40px + var(--space-4));
+  }
+}
+
+/* Progress panel -------------------------------------------------------------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.panelHeaderText {
+  flex: 1;
+  min-width: 0;
+}
+
+.panelTitle {
+  font-size: var(--text-card);
+  font-weight: var(--text-card-weight);
+  line-height: var(--leading-snug);
+}
+
+.panelSummary {
+  margin-top: 2px;
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+}
+
+.panelCompleted {
+  margin-top: var(--space-2);
+}
+
+.nextSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.nextEyebrow {
+  font-size: var(--text-group-label);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.nextCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--color-primary-soft);
+  border-left: 3px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-soft);
+}
+
+.nextCardHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.nextCardText {
+  flex: 1;
+  min-width: 0;
+}
+
+.nextTitle {
+  font-size: var(--text-body);
+  font-weight: var(--text-card-weight);
+  line-height: var(--leading-snug);
+}
+
+.nextDescription {
+  margin-top: 2px;
+  font-size: var(--text-label);
+  font-weight: var(--text-body-weight);
+  line-height: var(--leading-normal);
+  color: var(--color-text-secondary);
+}
+
+.nextMeta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.panelActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.panelHint {
+  font-size: var(--text-caption);
+  line-height: var(--leading-normal);
+  color: var(--color-text-muted);
+}
+
+/* Officer guide dialog -------------------------------------------------------- */
+.guide {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.guideSection {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.guideText {
+  flex: 1;
+  min-width: 0;
+}
+
+.guideTitle {
+  font-size: var(--text-card);
+  font-weight: var(--text-card-weight);
+  line-height: var(--leading-snug);
+}
+
+.guideLead {
+  margin-top: var(--space-1);
+  font-size: var(--text-body);
+  color: var(--color-text-secondary);
+}
+
+.guideList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding-left: var(--space-4);
+  list-style: disc;
+  font-size: var(--text-body);
+  line-height: var(--leading-normal);
+}
+
+.guideList strong {
+  font-weight: var(--text-label-weight);
+}
+
+/* Skeletons -------------------------------------------------------------------- */
+.skeletonPhaseHeader {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.skeletonPanel {
+  display: grid;
+  gap: var(--space-3);
+}
