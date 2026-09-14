@@ -1,0 +1,1 @@
+import{yn as e}from"./ui-CdTsMCRY.js";import{t}from"./index-DsHNyhWt.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Automations`,stage:6,description:`Triggers, conditions, actions and execution history.`})}export{r as default};

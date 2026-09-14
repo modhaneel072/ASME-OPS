@@ -1,0 +1,50 @@
+# Runtime
+__pycache__/
+.venv/
+.pytest_cache/
+*.pyc
+*.pyo
+
+# Database
+instance/
+*.db
+
+# Secrets
+.env
+
+# OS / IDE
+.DS_Store
+.vscode/
+*.log
+
+# Legacy (no longer used)
+run_inventory.command
+print_commands.env.example
+bambu.log
+
+# Raw photo imports kept only on local machines
+Make-a-thon-3-001/
+Make-a-thon-3-001.zip
+
+# Tooling and IDE caches
+.cache/
+node_modules/
+designs/
+
+# Build outputs / large local-only assets
+test-box.glb
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
+
+# ASME Ops frontend
+apps/ops-web/node_modules/
+apps/ops-web/dist/
+apps/ops-web/test-results/
+apps/ops-web/playwright-report/
+apps/ops-web/e2e/__screenshots__/**/*-actual.png
+
+# TypeScript incremental build state
+*.tsbuildinfo

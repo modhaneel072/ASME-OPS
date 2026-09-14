@@ -1,0 +1,35 @@
+.titleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.rowIcon {
+  color: var(--color-text-muted);
+}
+
+.externalLink {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  max-width: 100%;
+}
+
+.externalLinkText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notes {
+  margin: 0;
+  white-space: pre-wrap;
+  font: inherit;
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
