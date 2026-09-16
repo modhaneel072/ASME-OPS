@@ -1,0 +1,28 @@
+# Netlify hosts the ASME Ops screens (the React app in apps/ops-web).
+#
+# Netlify runs no Python, so the Flask API runs on its own host and is proxied
+# under /api by the rules apps/ops-web/scripts/netlify-postbuild.mjs generates
+# from the ASME_API_ORIGIN environment variable (set it in Site configuration ->
+# Environment variables, for example https://asme-ops-api.onrender.com).
+#
+# The bundle is built into netlify-dist/ rather than static/ops/, because the
+# copy in static/ops is built for Flask (assets under /static/ops/) and is
+# committed; this one is built for a site root (assets under /assets/).
+
+[build]
+  command = "npm ci --prefix apps/ops-web && npm run build:netlify --prefix apps/ops-web"
+  publish = "netlify-dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NPM_FLAGS = "--no-audit --no-fund"
+  VITE_BASE_PATH = "/"
+  VITE_OUT_DIR = "../../netlify-dist"
+
+# Deploy previews and branch deploys build the same way; they get their own URL,
+# so point them at a test backend by overriding ASME_API_ORIGIN per context.
+[context.deploy-preview.environment]
+  VITE_BASE_PATH = "/"
+
+[context.branch-deploy.environment]
+  VITE_BASE_PATH = "/"

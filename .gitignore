@@ -48,3 +48,7 @@ apps/ops-web/e2e/__screenshots__/**/*-actual.png
 
 # TypeScript incremental build state
 *.tsbuildinfo
+
+# Netlify build output (the Flask bundle lives in static/ops)
+netlify-dist/
+.netlify/

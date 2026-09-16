@@ -10,7 +10,8 @@
     "typecheck": "tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:netlify": "tsc -b && vite build && node scripts/netlify-postbuild.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
