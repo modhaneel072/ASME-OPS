@@ -366,6 +366,12 @@ class Settings:
                 "ASME_PUBLIC_BASE_URL is required in production when SMTP is configured: password reset e-mails "
                 "link to it, and the request Host header cannot be trusted for that."
             )
+        if not self.database_url.startswith(("sqlite:", "postgresql:", "postgresql+")):
+            problems.append(
+                f"ASME_DATABASE_URL is not a database address: {self.database_url!r}. It must start with "
+                "postgresql:// (a managed database, copied from the hosting dashboard) or sqlite:// (a local "
+                "file). A placeholder left in an uploaded environment file is the usual cause."
+            )
         if self.is_production and self.database_url.startswith("sqlite") and not self.demo_mode:
             problems.append(
                 "ASME_DATABASE_URL is a SQLite file in production. Hosted containers get a fresh, empty filesystem "

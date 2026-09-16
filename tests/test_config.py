@@ -228,3 +228,13 @@ def test_demo_mode_allows_a_throwaway_database_and_says_so(monkeypatch):
     assert not any("SQLite" in p for p in hosted.validate())
     assert any("ASME_DEMO_MODE is on" in n for n in hosted.warnings())
     assert not any("disappears" in n for n in hosted.warnings())
+
+
+def test_a_placeholder_database_url_is_rejected_with_a_readable_message(monkeypatch):
+    monkeypatch.setenv("ASME_DATABASE_URL", "REPLACE_WITH_INTERNAL_DATABASE_URL")
+    cfg = Settings.from_env(env="development")
+    problems = [p for p in cfg.validate() if "ASME_DATABASE_URL is not a database address" in p]
+    assert problems, cfg.validate()
+    assert "REPLACE_WITH_INTERNAL_DATABASE_URL" in problems[0]
+    for good in ("sqlite:///inventory.db", "postgresql://u:p@h/db", "postgresql+psycopg2://u:p@h/db"):
+        assert not any("not a database address" in p for p in Settings.from_env(env="development", database_url=good).validate()), good
