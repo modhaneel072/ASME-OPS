@@ -2,7 +2,31 @@
 
 from __future__ import annotations
 
+import ipaddress
+
 from flask import jsonify, request
+
+
+def _clean_forwarded_address(value: str) -> str | None:
+    """Return ``value`` as a bare IP address, or ``None`` if it is not one.
+
+    Entries in ``X-Forwarded-For`` are written by machines we do not control, so
+    anything that is not a plain IPv4/IPv6 address (a hostname, ``unknown``, a
+    padded log line, an IPv6 zone identifier) is rejected rather than stored in
+    an audit record or used as a rate-limit bucket key.
+    """
+    candidate = (value or "").strip().strip('"')
+    if not candidate:
+        return None
+    if candidate.startswith("[") and "]" in candidate:  # [2001:db8::1]:443
+        candidate = candidate[1 : candidate.index("]")]
+    elif candidate.count(":") == 1:  # 203.0.113.7:54321
+        candidate = candidate.split(":", 1)[0]
+    candidate = candidate.split("%", 1)[0]
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return None
 
 
 def request_client_ip():
@@ -15,6 +39,19 @@ def request_client_ip():
     further left was supplied by whoever made the request and must not be
     trusted. With the default of ``0`` the socket peer is used, which is the
     only address nobody can forge.
+
+    A chain with fewer than ``n`` entries did not travel through the proxies we
+    were told to expect - a request sent straight to the origin host, bypassing
+    the CDN, looks like this - so its leftmost entry is whatever the caller
+    typed. In that case the socket peer is used instead of believing the header.
+
+    The residual risk, which no header can remove: if the origin host stays
+    publicly reachable, a request sent directly to it travels through one proxy
+    fewer than configured while still carrying ``n`` entries, and the value
+    selected is then the caller's own. That is enough to pick a different
+    rate-limit bucket and to write a wrong address into an audit row. It is not
+    enough to get past the per-identifier login counter, which does not use the
+    address at all.
     """
     trusted = 0
     try:
@@ -25,8 +62,10 @@ def request_client_ip():
         trusted = 0
     if trusted:
         chain = [part.strip() for part in (request.headers.get("X-Forwarded-For") or "").split(",") if part.strip()]
-        if chain:
-            return chain[max(0, len(chain) - trusted)][:120]
+        if len(chain) >= trusted:
+            candidate = _clean_forwarded_address(chain[len(chain) - trusted])
+            if candidate:
+                return candidate[:120]
     return (request.remote_addr or "unknown")[:120]
 
 

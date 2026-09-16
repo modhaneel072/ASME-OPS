@@ -8,7 +8,7 @@ from asme.config import settings
 from asme.extensions import db
 from asme.integrations import mail
 from asme.integrations.calendar import CalendarError, get_provider
-from asme.jobs.outbox import handler
+from asme.jobs.outbox import failure_handler, handler
 from asme.models import CalendarSync, Event, User
 
 
@@ -69,6 +69,94 @@ def auth_password_reset(payload: dict):
     from asme.services import password_reset
 
     password_reset.deliver(payload.get("email") or "", payload.get("origin"))
+
+
+# --------------------------------------------------------------------------- permanent failures
+
+
+def _chapter_administrator_ids(org) -> list[int]:
+    from asme.ops.models import Membership, Role
+
+    rows = (
+        db.session.query(Membership.user_id)
+        .join(Role, Role.id == Membership.role_id)
+        .filter(
+            Membership.organization_id == org.id,
+            Membership.member_status == "active",
+            Role.system_key == "chapter_admin",
+        )
+        .all()
+    )
+    return [row[0] for row in rows]
+
+
+def _surface_to_administrators(job, title: str, body: str) -> None:
+    """Record a permanently failed job on the chapter and tell its administrators.
+
+    The audit event is the part that always happens: it is attached to the
+    chapter rather than to a person, so it survives even when nobody holds an
+    administrator membership yet, and the officers' change feed shows it. The
+    notifications are best-effort on top of that.
+    """
+    from asme.ops.models import Organization
+    from asme.ops.services import audit_events, notifications
+    from asme.ops.services.scans import system_context
+
+    org = Organization.query.order_by(Organization.created_at.asc(), Organization.slug.asc()).first()
+    if org is None:
+        return
+    ctx = system_context(org)
+    audit_events.record(
+        ctx,
+        "job.failed",
+        "outbox_job",
+        entity_id=job.id,
+        summary=title,
+        kind=job.kind,
+        attempts=job.attempts,
+        error=(job.last_error or "")[:400],
+    )
+    admin_ids = _chapter_administrator_ids(org)
+    if admin_ids:
+        notifications.notify(
+            ctx,
+            admin_ids,
+            "system",
+            title,
+            body,
+            dedupe_key=f"job.failed:{job.id}",
+            exclude_actor=False,
+        )
+
+
+@failure_handler("auth.password_reset")
+def auth_password_reset_failed(job, payload: dict, exc: Exception):
+    address = (payload.get("email") or "").strip() or "an address we no longer have"
+    _surface_to_administrators(
+        job,
+        "A password reset e-mail could not be sent",
+        (
+            f"ASME Ops tried {job.attempts} times over several hours to e-mail a password reset "
+            f"link to {address} and the mail server refused every time. That person is still "
+            "waiting and has no link: set their password for them from the people list, and "
+            "check the chapter mailbox settings (ASME_SMTP_USER / ASME_SMTP_PASS).\n\n"
+            f"Last error: {job.last_error or exc}"
+        ),
+    )
+
+
+@failure_handler("mail.send")
+def mail_send_failed(job, payload: dict, exc: Exception):
+    address = (payload.get("to") or "").strip() or "an unknown address"
+    _surface_to_administrators(
+        job,
+        "An e-mail from ASME Ops was never delivered",
+        (
+            f"ASME Ops gave up trying to send \"{payload.get('subject') or '(no subject)'}\" to "
+            f"{address} after {job.attempts} attempts. Nobody was told. Check the chapter mailbox "
+            f"settings, then send the message yourself if it mattered.\n\nLast error: {job.last_error or exc}"
+        ),
+    )
 
 
 @handler("stock.reconcile")

@@ -9,6 +9,8 @@ google-api-python-client>=2.160,<3.0
 google-auth>=2.35,<3.0
 pypdf>=5.0,<6.0
 reportlab>=4.2,<5.0
-psycopg2-binary>=2.9,<3.0
+# 2.9.10 is the first release with wheels for Python 3.13; earlier versions try
+# to compile from source and need PostgreSQL's build tools to be installed.
+psycopg2-binary>=2.9.10,<3.0
 anthropic>=0.40,<1.0
 python-dotenv>=1.0,<2.0

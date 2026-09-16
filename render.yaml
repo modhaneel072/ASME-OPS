@@ -1,17 +1,203 @@
+# ASME Ops backend - Render Blueprint.
+#
+# This file creates everything the Flask API needs. In the Render dashboard:
+# New -> Blueprint -> pick this repository -> Deploy. Render reads this file,
+# creates the database and the web service, and asks you to type in the handful
+# of values that are marked "sync: false" below (it never stores those in git).
+#
+# The screens themselves are not here: they are built and served by Netlify from
+# apps/ops-web (see netlify.toml). Netlify forwards /api/* to the web service
+# created here, using the Netlify environment variable ASME_API_ORIGIN.
+#
+# WHAT THIS COSTS, honestly:
+#   Web service  "free"          $0/month. Sleeps after 15 minutes with no
+#                                visitors and takes about a minute to wake up on
+#                                the next click. No permanent disk.
+#   Database     "basic-256mb"   a few dollars a month (read the figure on
+#                                render.com/pricing before you deploy). It keeps
+#                                the chapter's data and can be restored after a
+#                                mistake.
+# The database is the one line worth paying for. Render's free database is
+# deleted 30 days after it is created, with 14 more days to start paying before
+# the data goes, and it has no backups of any kind - so everything typed into
+# ASME Ops in the first month would be gone before the end of the semester. If
+# the chapter truly cannot spend anything, change "plan: basic-256mb" below to
+# "plan: free" and put a reminder in your calendar for day 25.
+
+databases:
+  - name: asme-ops-db
+    # Change to "free" only if you accept that the database is deleted after
+    # 30 days (+14 days to upgrade) and has no backups.
+    plan: basic-256mb
+    databaseName: asme_ops
+    user: asme_ops
+    # Ohio is the Render region closest to Iowa. The web service below must stay
+    # in the SAME region: that is what lets the two talk over Render's private
+    # network instead of the public internet.
+    region: ohio
+    postgresMajorVersion: "17"
+    diskSizeGB: 1
+    # Closed to the internet. Render's default for a NEW database is to accept
+    # connections from every address on earth, with only the generated password
+    # in the way; an empty list means the database can only be reached from
+    # inside this Render region - which is how the web service reaches it (the
+    # ASME_DATABASE_URL below is wired to the PRIVATE connection string).
+    # What this costs you: the External Database URL stops working, including
+    # from your own laptop. To use it - the free-instance migration in section 9
+    # of docs/deploy-render.md, or a backup export - open the database in the
+    # Render dashboard, Access Control -> add your own IP address, do the work,
+    # then remove it again.
+    ipAllowList: []
+
 services:
   - type: web
-    name: asme-web
-    env: python
+    # This name decides the public address: https://asme-ops-api.onrender.com
+    # That is the value you paste into Netlify as ASME_API_ORIGIN. Renaming the
+    # service changes the address, so leave it alone once Netlify points at it.
+    name: asme-ops-api
+    runtime: python
     plan: free
+    region: ohio
+    branch: main
+    # Redeploy automatically on every push to main.
+    autoDeployTrigger: commit
+    # Render polls this path. It answers without touching the database, so a
+    # deploy is never marked unhealthy because the database is briefly busy.
     healthCheckPath: /healthz
     buildCommand: pip install --upgrade pip && pip install -r requirements-render.txt
-    startCommand: python manage.py upgrade && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app
+    # The database migration runs here, in front of the web server, joined by
+    # "&&": if it fails, gunicorn never starts, the health check never passes,
+    # the deploy is rejected and the previous version keeps serving. Render's
+    # dedicated pre-deploy step would be the tidier home for it, but that step is
+    # only available on paid instance types - see preDeployCommand below.
+    # The Python version comes from the .python-version file in the repo root -
+    # but only if that file is COMMITTED, because Render builds a clone. Check it
+    # with `git ls-files --error-unmatch .python-version`; if that errors, the
+    # build silently uses Render's own default interpreter instead, so commit the
+    # file or set PYTHON_VERSION=3.13 in the dashboard until you have.
+    startCommand: python manage.py upgrade && gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120 app:app
+    # When you move this service to a paid instance type, delete
+    # "python manage.py upgrade && " from the line above and uncomment this:
+    # preDeployCommand: python manage.py upgrade
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.11
-      - key: ASME_SECRET_KEY
-        generateValue: true
+      # -- runtime ---------------------------------------------------------
       - key: ASME_ENV
         value: production
+      # Render generates this once and keeps it forever. NEVER change it by
+      # hand: a new value signs every member out and breaks every file-download
+      # link that has already been sent.
+      - key: ASME_SECRET_KEY
+        generateValue: true
+      # Wired straight to the database above, so nobody has to copy a password.
+      # This app reads ASME_DATABASE_URL; Render's own DATABASE_URL is accepted
+      # as a fallback but this is the name to set.
+      - key: ASME_DATABASE_URL
+        fromDatabase:
+          name: asme-ops-db
+          property: connectionString
+      # Migrations run from the start command above, never from inside the web
+      # workers (which would run the same migration several times at once).
       - key: ASME_AUTO_MIGRATE
         value: "0"
+
+      # -- the two addresses -----------------------------------------------
+      # PASTE: the Netlify address of the screens, for example
+      # https://asme-ops.netlify.app - no path, no slash on the end. Password
+      # reset and invitation e-mails link to it, so it must be the address
+      # members actually have in their browser, not this backend's address.
+      - key: ASME_PUBLIC_BASE_URL
+        sync: false
+
+      # -- sessions and abuse limits ---------------------------------------
+      - key: ASME_SESSION_COOKIE_SECURE
+        value: "1"
+      - key: ASME_SESSION_COOKIE_SAMESITE
+        value: Lax
+      # Number of proxies that add to the X-Forwarded-For header in front of
+      # this service: Netlify's edge, then Render's router. This is what lets
+      # login rate limiting and audit records tell one visitor from another.
+      # Confirm it on the first deploy (see docs) before trusting the limiter.
+      - key: ASME_TRUSTED_PROXY_COUNT
+        value: "2"
+      - key: ASME_LOGIN_RATE_WINDOW_SECONDS
+        value: "900"
+      - key: ASME_LOGIN_RATE_MAX_ATTEMPTS
+        value: "8"
+
+      # -- the first administrator -----------------------------------------
+      # Fixed on purpose. Changing this after the first deploy makes the next
+      # deploy quietly create a SECOND administrator account.
+      - key: ASME_DEFAULT_ADMIN_EMAIL
+        value: admin@uiowa.edu
+      - key: ASME_ADMIN_EMAILS
+        value: admin@uiowa.edu
+      # PASTE: a long random password you invent now (16+ characters). You sign
+      # in with it once, then change your password inside ASME Ops.
+      # This one is NOT optional: left empty, the app refuses to start and the
+      # log says so by name, because the fallback it would otherwise use is
+      # written in this public repository for anyone to read.
+      - key: ASME_DEFAULT_ADMIN_PASSWORD
+        sync: false
+      # The password given to accounts created from an imported roster file. The
+      # same published fallback applies, so Render generates a random one instead
+      # and nobody has to invent a second password: people who arrive that way
+      # get in through an invite link or "forgot password", never by being told
+      # a shared password. Fresh deploys import no roster, so nothing uses it.
+      - key: ASME_DEFAULT_USER_PASSWORD
+        generateValue: true
+
+      # -- background jobs --------------------------------------------------
+      # The nightly stock reconciliation and the hourly work-order scan run in a
+      # thread inside the web service. That is correct here: Render has no free
+      # background worker, and the schedule is enqueued once per window no matter
+      # how many processes ask for it. On a paid plan you can instead add a
+      # worker service running "python manage.py worker" and set this to 0.
+      - key: ASME_OUTBOX_WORKER
+        value: "1"
+      - key: ASME_OUTBOX_POLL_SECONDS
+        value: "15"
+
+      # -- file attachments --------------------------------------------------
+      - key: ASME_STORAGE_BACKEND
+        value: local
+      # A free web service has no permanent disk: anything uploaded is deleted
+      # the next time the service redeploys or wakes up, while the entry
+      # pointing at it stays in the database and its download button then fails.
+      # This flag is the app's way of making you agree to that out loud - it
+      # refuses to start in production without either this or a real disk.
+      # To keep attachments instead: move this service to a paid instance type,
+      # add a disk (see the commented block at the bottom of this file), delete
+      # this variable and set ASME_UPLOAD_ROOT to /var/asme-uploads.
+      - key: ASME_UPLOADS_EPHEMERAL_OK
+        value: "1"
+      - key: ASME_UPLOAD_MAX_MB
+        value: "25"
+
+      # -- e-mail (optional) -------------------------------------------------
+      # Password reset e-mails are only sent once these two are filled in. Leave
+      # them blank at first; the app starts fine without them.
+      - key: ASME_SMTP_HOST
+        value: smtp.office365.com
+      - key: ASME_SMTP_PORT
+        value: "587"
+      # PASTE (or leave blank): the mailbox address that sends chapter e-mail.
+      - key: ASME_SMTP_USER
+        sync: false
+      # PASTE (or leave blank): that mailbox's app password. Render keeps this
+      # out of git and shows it to nobody afterwards.
+      - key: ASME_SMTP_PASS
+        sync: false
+
+      # -- feature flags -----------------------------------------------------
+      - key: ASME_ONBOARDING_ENFORCE
+        value: "0"
+      - key: ASME_OPS_POLL_SECONDS
+        value: "15"
+
+    # Keeping attachments means a paid instance type and a disk. Change
+    # "plan: free" above to "plan: starter", uncomment this block, and replace
+    # the ASME_UPLOADS_EPHEMERAL_OK variable with ASME_UPLOAD_ROOT=/var/asme-uploads.
+    # disk:
+    #   name: asme-uploads
+    #   mountPath: /var/asme-uploads
+    #   sizeGB: 1

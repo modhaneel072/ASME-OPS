@@ -20,6 +20,31 @@ from flask import current_app
 TRUTHY = {"1", "true", "yes", "on", "y"}
 FALSY = {"0", "false", "no", "off", "n"}
 
+#: The bootstrap password this file used to fall back to. It is printed in a
+#: public repository, so it is a published credential, not a default: production
+#: refuses to start with it (see :meth:`Settings.validate`).
+PUBLISHED_DEFAULT_PASSWORD = "ChangeMe123!"
+
+#: Shortest bootstrap password production accepts. The same minimum the account
+#: API applies to a password a member chooses (asme/blueprints/ops/auth.py).
+BOOTSTRAP_PASSWORD_MIN_LENGTH = 8
+
+#: Environment variables that hosting platforms set on every process they run.
+#: Their presence means "this is a real deployment" even when nobody remembered
+#: to set ``ASME_ENV`` (see ``env_declared``).
+HOSTED_PLATFORM_VARS = (
+    "RENDER",
+    "DYNO",
+    "FLY_APP_NAME",
+    "K_SERVICE",
+    "KUBERNETES_SERVICE_HOST",
+    "WEBSITE_SITE_NAME",
+    "GAE_ENV",
+    "AWS_EXECUTION_ENV",
+    "ECS_CONTAINER_METADATA_URI",
+    "VERCEL",
+)
+
 
 def _str(name: str, default: str = "") -> str:
     return (os.environ.get(name) or default).strip()
@@ -49,6 +74,61 @@ def _int(name: str, default: int, minimum: int | None = None) -> int:
     return value
 
 
+def hosting_platform() -> str:
+    """Name of the hosting platform variable found in the environment, if any."""
+    for name in HOSTED_PLATFORM_VARS:
+        if (os.environ.get(name) or "").strip():
+            return name
+    return ""
+
+
+def bootstrap_password_problem(name: str, value: str) -> str | None:
+    """Why ``value`` is not usable as a bootstrap account password, or ``None``.
+
+    ``name`` is the environment variable, so the message names the thing the
+    reader has to go and change.
+    """
+    value = value or ""
+    if not value.strip():
+        return (
+            f"{name} is empty, so the account it creates would be given the password "
+            f"'{PUBLISHED_DEFAULT_PASSWORD}' that is written in this public repository. "
+            f"Set {name} to a long password you invent (16+ characters) in the hosting "
+            "dashboard, and change it inside ASME Ops after the first sign-in."
+        )
+    if value == PUBLISHED_DEFAULT_PASSWORD:
+        return (
+            f"{name} is still '{PUBLISHED_DEFAULT_PASSWORD}', which is written in this public "
+            "repository: anyone who reads it could sign in to the chapter's live platform. "
+            f"Set {name} to a long password you invent (16+ characters) in the hosting dashboard."
+        )
+    if len(value) < BOOTSTRAP_PASSWORD_MIN_LENGTH:
+        return (
+            f"{name} is shorter than {BOOTSTRAP_PASSWORD_MIN_LENGTH} characters, which is less than "
+            "ASME Ops lets a member choose for themselves. Make it 16 or more."
+        )
+    return None
+
+
+def _database_url() -> str:
+    """The SQLAlchemy URL, normalised.
+
+    ``ASME_DATABASE_URL`` is the name this app owns. Managed hosts (Render,
+    Heroku, Neon, Supabase) inject their own ``DATABASE_URL``; accepting it as a
+    fallback means a service that was wired up with only the host's variable
+    still reaches the real database instead of silently falling back to a
+    throwaway SQLite file on an ephemeral container disk.
+
+    Those hosts also still hand out the legacy ``postgres://`` scheme in places.
+    SQLAlchemy 2.0 removed that alias and raises ``NoSuchModuleError`` for it, so
+    it is rewritten to ``postgresql://`` here rather than at every call site.
+    """
+    raw = _str("ASME_DATABASE_URL") or _str("DATABASE_URL") or "sqlite:///inventory.db"
+    if raw.startswith("postgres://"):
+        raw = "postgresql://" + raw[len("postgres://") :]
+    return raw
+
+
 def load_instance_env_file(path: Path) -> None:
     """Load ``KEY=value`` lines from an instance-local env file into ``os.environ``.
 
@@ -76,6 +156,16 @@ def load_instance_env_file(path: Path) -> None:
 class Settings:
     # -- runtime -------------------------------------------------------------
     env: str = "production"
+    # Whether ``env`` was *declared* (``ASME_ENV``, an explicit override, or a
+    # hosting platform's own variable) rather than assumed. ``production`` stays
+    # the assumed default so an unconfigured deployment still gets production
+    # behaviour - but only a declared production refuses to start over the
+    # problems in :meth:`validate`, because the same package is also a checkout
+    # on a student's laptop running one-shot commands such as
+    # ``python manage.py upgrade`` against the hosted database (see
+    # docs/deploy-render.md section 9). There the problems are logged in full
+    # instead. Defaults to True so a hand-built Settings is never the lenient one.
+    env_declared: bool = True
     secret_key: str = ""
     database_url: str = "sqlite:///inventory.db"
     port: int = 5000
@@ -152,6 +242,11 @@ class Settings:
     # -- ASME Ops ------------------------------------------------------------
     storage_backend: str = "local"
     upload_root: str = ""
+    # Acknowledgement that the local storage root is not a persistent disk. The
+    # app refuses to start in production without either a real disk or this flag,
+    # because the alternative is attachment rows pointing at files that the host
+    # deleted at the last deploy (see :meth:`validate`).
+    uploads_ephemeral_ok: bool = False
     upload_max_bytes: int = 25 * 1024 * 1024
     ops_changes_poll_seconds: int = 15
     ops_download_ttl_seconds: int = 300
@@ -177,8 +272,9 @@ class Settings:
         )
         values = dict(
             env=env,
+            env_declared=bool(_str("ASME_ENV")) or bool(hosting_platform()) or "env" in overrides,
             secret_key=_str("ASME_SECRET_KEY", "asme-dev-secret"),
-            database_url=_str("ASME_DATABASE_URL", "sqlite:///inventory.db"),
+            database_url=_database_url(),
             port=_int("PORT", 5000, minimum=1),
             auto_migrate=_bool("ASME_AUTO_MIGRATE", default=(env != "production")),
             public_base_url=_str("ASME_PUBLIC_BASE_URL").rstrip("/"),
@@ -229,6 +325,7 @@ class Settings:
             anthropic_model=_str("ASME_ASSISTANT_MODEL", "claude-sonnet-5"),
             storage_backend=(_str("ASME_STORAGE_BACKEND", "local").lower() or "local"),
             upload_root=_str("ASME_UPLOAD_ROOT"),
+            uploads_ephemeral_ok=_bool("ASME_UPLOADS_EPHEMERAL_OK", default=False),
             upload_max_bytes=_int("ASME_UPLOAD_MAX_MB", 25, minimum=1) * 1024 * 1024,
             ops_changes_poll_seconds=_int("ASME_OPS_POLL_SECONDS", 15, minimum=3),
             ops_download_ttl_seconds=_int("ASME_OPS_DOWNLOAD_TTL_SECONDS", 300, minimum=30),
@@ -267,23 +364,71 @@ class Settings:
                 "ASME_PUBLIC_BASE_URL is required in production when SMTP is configured: password reset e-mails "
                 "link to it, and the request Host header cannot be trusted for that."
             )
+        if self.is_production and self.database_url.startswith("sqlite"):
+            problems.append(
+                "ASME_DATABASE_URL is a SQLite file in production. Hosted containers get a fresh, empty filesystem "
+                "on every deploy and restart, so every member, work order and purchase request would be erased "
+                "without any error. Set ASME_DATABASE_URL to the PostgreSQL connection string of a managed database "
+                "(it starts with postgresql:// and ends with ?sslmode=require)."
+            )
+        if self.is_production:
+            # The bootstrap passwords create real accounts on a public address:
+            # asme/services/bootstrap.py gives the first administrator
+            # ``default_admin_password`` and every roster-imported account
+            # ``default_user_password``. Both fall back to a value printed in this
+            # public repository, and ASME_DEFAULT_ADMIN_EMAIL is published in
+            # render.yaml, so a blank dashboard field publishes an administrator
+            # login for the chapter's live data. That is a refusal, not a warning:
+            # the warning was one log line during a ten-minute first build.
+            for name, value in (
+                ("ASME_DEFAULT_ADMIN_PASSWORD", self.default_admin_password),
+                ("ASME_DEFAULT_USER_PASSWORD", self.default_user_password),
+            ):
+                problem = bootstrap_password_problem(name, value)
+                if problem:
+                    problems.append(problem)
         if self.storage_backend not in {"local", "s3"}:
             problems.append("ASME_STORAGE_BACKEND must be 'local' or 's3'.")
         if self.storage_backend == "s3":
             problems.append("ASME_STORAGE_BACKEND=s3 is not implemented yet; use 'local' (see docs/deployment.md).")
+        # A leading "/" is absolute on the Linux hosts this deploys to, which is
+        # not how Windows (where development happens) reads it.
+        if self.upload_root and not (self.upload_root.startswith("/") or Path(self.upload_root).is_absolute()):
+            problems.append(
+                "ASME_UPLOAD_ROOT must be an absolute path to the mount point of a persistent disk, "
+                "for example /var/asme-uploads."
+            )
+        if self.is_production and self.storage_backend == "local" and not self.upload_root and not self.uploads_ephemeral_ok:
+            problems.append(
+                "Attachments would be written inside the container, which hosted platforms erase on every deploy "
+                "and restart: the database rows survive and their downloads break. Either set ASME_UPLOAD_ROOT to a "
+                "persistent disk mounted on this service (for example /var/asme-uploads), or set "
+                "ASME_UPLOADS_EPHEMERAL_OK=1 to accept that uploaded files are lost on every deploy."
+            )
         return problems
 
     def warnings(self) -> list[str]:
         """Things worth fixing that never block startup."""
         notes: list[str] = []
-        if self.is_production and self.default_admin_password == "ChangeMe123!":
-            notes.append("ASME_DEFAULT_ADMIN_PASSWORD is still the default; change it and rotate the admin login.")
+        # The bootstrap passwords are not here: they refuse startup (validate()).
         if self.is_production and not self.session_cookie_secure:
             notes.append("ASME_SESSION_COOKIE_SECURE is off; set it to 1 when serving over HTTPS.")
         if self.is_production and not self.public_base_url:
             notes.append(
                 "ASME_PUBLIC_BASE_URL is not set; password reset e-mails are not sent in production until it is, "
                 "and invite links use the inviting administrator's own request host."
+            )
+        if self.is_production and self.storage_backend == "local" and not self.upload_root and self.uploads_ephemeral_ok:
+            notes.append(
+                "ASME_UPLOADS_EPHEMERAL_OK is on: uploaded attachments live in the container and are deleted on "
+                "every deploy and restart. Tell officers not to rely on attachments until a persistent disk is "
+                "mounted and ASME_UPLOAD_ROOT points at it."
+            )
+        if self.is_production and self.trusted_proxy_count == 0:
+            notes.append(
+                "ASME_TRUSTED_PROXY_COUNT is 0, so every visitor behind the hosting platform's router shares one "
+                "address: login rate limiting and audit records cannot tell them apart. Set it to the number of "
+                "proxies that append to X-Forwarded-For in front of this service."
             )
         if self.calendar_provider == "google" and not self.google_service_account_json and not self.google_calendar_embed_url:
             notes.append("No Google calendar credentials or embed URL; room scheduling is disabled until configured.")

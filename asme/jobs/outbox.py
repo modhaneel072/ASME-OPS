@@ -15,7 +15,7 @@ import json
 import logging
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Callable
 
 from asme.extensions import db
@@ -24,8 +24,28 @@ from asme.models import OutboxJob
 log = logging.getLogger("asme.jobs")
 
 _handlers: dict[str, Callable[[dict], None]] = {}
+_failure_handlers: dict[str, Callable[["OutboxJob", dict, Exception], None]] = {}
 _worker_threads: dict[int, threading.Thread] = {}
 _stop_events: dict[int, threading.Event] = {}
+
+#: How long a job keeps trying before it is given up on: (attempts, longest gap
+#: between attempts, in seconds).
+DEFAULT_RETRY_POLICY = (5, 3600)
+
+#: Kinds that deserve more patience than the default. Five attempts with the
+#: default backoff are all spent inside about eight minutes, which is shorter
+#: than any real mail outage: outbound mail blocked at the host, an app password
+#: rotated at officer handover, a provider throttle. A member who asked for a
+#: password reset is waiting on these, so they ride out a working day instead
+#: (ten attempts spread over roughly four hours).
+RETRY_POLICY: dict[str, tuple[int, int]] = {
+    "auth.password_reset": (10, 6 * 3600),
+    "mail.send": (10, 6 * 3600),
+}
+
+
+def retry_policy(kind: str) -> tuple[int, int]:
+    return RETRY_POLICY.get(kind, DEFAULT_RETRY_POLICY)
 
 
 def handler(kind: str):
@@ -36,23 +56,53 @@ def handler(kind: str):
     return decorator
 
 
+def failure_handler(kind: str):
+    """Register what to do when a job of ``kind`` has used up every attempt.
+
+    A permanently failed job that somebody is waiting on must end up somewhere a
+    person will look. The hook runs after the job row is marked ``failed`` and is
+    committed separately, so anything it raises is logged and never re-fails the
+    job or stops the worker.
+    """
+
+    def decorator(fn):
+        _failure_handlers[kind] = fn
+        return fn
+
+    return decorator
+
+
 def registered_kinds():
     return sorted(_handlers)
 
 
-def enqueue(kind: str, payload: dict | None = None, run_at: datetime | None = None, max_attempts: int = 5) -> OutboxJob:
+def _report_permanent_failure(job: OutboxJob, payload: dict, exc: Exception) -> None:
+    fn = _failure_handlers.get(job.kind)
+    if fn is None:
+        return
+    try:
+        fn(job, payload, exc)
+        db.session.commit()
+    except Exception:  # pragma: no cover - defensive; the job is already failed
+        db.session.rollback()
+        log.exception("outbox failure hook raised for job id=%s kind=%s", job.id, job.kind)
+
+
+def enqueue(kind: str, payload: dict | None = None, run_at: datetime | None = None, max_attempts: int | None = None) -> OutboxJob:
     job = OutboxJob(
         kind=kind,
         payload_json=json.dumps(payload or {}, default=str),
         status="pending",
         run_at=run_at or datetime.utcnow(),
-        max_attempts=max_attempts,
+        max_attempts=max_attempts if max_attempts is not None else retry_policy(kind)[0],
     )
     db.session.add(job)
     return job
 
 
-def enqueue_once(kind: str, idempotency_key: str, payload: dict | None = None, run_at: datetime | None = None, max_attempts: int = 5) -> OutboxJob | None:
+def enqueue_once(
+    kind: str, idempotency_key: str, payload: dict | None = None, run_at: datetime | None = None, max_attempts: int | None = None
+) -> OutboxJob | None:
     """Enqueue ``kind`` unless a job with ``idempotency_key`` already exists.
 
     Returns the new job, or ``None`` when the key was already used (any status).
@@ -71,7 +121,7 @@ def enqueue_once(kind: str, idempotency_key: str, payload: dict | None = None, r
         payload_json=json.dumps(payload or {}, default=str),
         status="pending",
         run_at=run_at or datetime.utcnow(),
-        max_attempts=max_attempts,
+        max_attempts=max_attempts if max_attempts is not None else retry_policy(kind)[0],
         idempotency_key=key,
     )
     try:
@@ -110,14 +160,20 @@ def _run_one(job: OutboxJob) -> bool:
         job.attempts = (job.attempts or 0) + 1
         job.last_error = str(exc)[:1000]
         job.locked_at = None
-        if job.attempts >= (job.max_attempts or 1):
+        permanent = job.attempts >= (job.max_attempts or 1)
+        if permanent:
             job.status = "failed"
             log.error("outbox job failed permanently id=%s kind=%s error=%s", job.id, job.kind, exc)
         else:
             job.status = "pending"
-            job.run_at = datetime.utcnow() + timedelta(seconds=min(2 ** job.attempts * 15, 3600))
+            job.run_at = datetime.utcnow() + timedelta(seconds=min(2 ** job.attempts * 15, retry_policy(job.kind)[1]))
             log.warning("outbox job retry id=%s kind=%s attempt=%s error=%s", job.id, job.kind, job.attempts, exc)
         db.session.commit()
+        if permanent:
+            # The log line above is kept for seven days on a free plan and read by
+            # nobody. Give the kinds that somebody is waiting on a way to say so
+            # inside the product as well (asme/jobs/handlers.py).
+            _report_permanent_failure(job, payload, exc)
         return False
 
 
@@ -147,17 +203,33 @@ def process_pending(limit: int = 20) -> int:
     return succeeded
 
 
+def recurring_key(kind: str, every: timedelta, now: datetime | None = None) -> str:
+    """The idempotency key for ``kind`` in the window ``now`` falls into.
+
+    Windows are fixed slices of the UTC clock rather than a sliding "was one
+    enqueued recently" test, so every process computes the same key for the same
+    moment. That is what makes :func:`ensure_recurring` safe to call from more
+    than one web worker, or from a web worker and a dedicated worker process at
+    the same time: they all race to insert the same key and the unique index
+    ``uq_outbox_jobs_idempotency_key`` lets exactly one of them win.
+    """
+    seconds = max(1, int(every.total_seconds()))
+    moment = now or datetime.utcnow()
+    window = int(moment.replace(tzinfo=timezone.utc).timestamp()) // seconds
+    return f"recurring:{kind}:{window}"[:160]
+
+
 def ensure_recurring(kind: str, every: timedelta, payload: dict | None = None) -> bool:
-    """Make sure a recurring job of ``kind`` exists in the next ``every`` window."""
-    horizon = datetime.utcnow() - every
-    recent = (
-        OutboxJob.query.filter(OutboxJob.kind == kind, OutboxJob.status.in_(["pending", "running", "done"]))
-        .filter((OutboxJob.completed_at >= horizon) | (OutboxJob.status.in_(["pending", "running"])))
-        .first()
-    )
-    if recent:
+    """Make sure exactly one job of ``kind`` is enqueued per ``every`` window.
+
+    Returns ``True`` when this caller is the one that enqueued it. Concurrent
+    callers - one per gunicorn worker, plus any dedicated worker process - get
+    ``False`` and enqueue nothing.
+    """
+    now = datetime.utcnow()
+    job = enqueue_once(kind, recurring_key(kind, every, now), payload or {}, run_at=now, max_attempts=3)
+    if job is None:
         return False
-    enqueue(kind, payload or {}, run_at=datetime.utcnow(), max_attempts=3)
     db.session.commit()
     return True
 
@@ -182,13 +254,27 @@ def retry(job: OutboxJob):
 # --------------------------------------------------------------------------- worker thread
 
 
+#: The jobs nobody enqueues by hand: (kind, how often). One list, used by the
+#: in-process worker thread and by ``python manage.py worker`` alike, so a
+#: dedicated worker process is a complete replacement for the thread rather than
+#: a silent downgrade that stops the schedule.
+RECURRING_JOBS: tuple[tuple[str, timedelta], ...] = (
+    ("stock.reconcile", timedelta(hours=24)),
+    ("ops.work_order.scan", timedelta(hours=1)),
+)
+
+
+def schedule_recurring() -> int:
+    """Enqueue every due recurring job. Returns how many this caller enqueued."""
+    return sum(1 for kind, every in RECURRING_JOBS if ensure_recurring(kind, every))
+
+
 def _loop(app, stop_event: threading.Event):
     cfg = app.config["SETTINGS"]
     with app.app_context():
         while not stop_event.is_set():
             try:
-                ensure_recurring("stock.reconcile", timedelta(hours=24))
-                ensure_recurring("ops.work_order.scan", timedelta(hours=1))
+                schedule_recurring()
                 process_pending()
             except Exception:  # pragma: no cover - defensive
                 log.exception("outbox worker iteration failed")
