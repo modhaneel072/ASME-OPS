@@ -81,6 +81,35 @@ everything entered in that first month as test data.
 
 ---
 
+## 1b. Showcase deployment: no database at all
+
+If this Render service exists only to *show* ASME Ops - a demonstration for the
+chapter, an advisor or a sponsor - and the real installation will be built
+elsewhere later, you do not have to create a database.
+
+Set `ASME_DEMO_MODE=1` and leave `ASME_DATABASE_URL` unset. The app then starts
+on a file database inside the container and prints a warning on every boot
+saying so.
+
+What that means in practice:
+
+- Everything works: sign in, teams, work orders, parts, purchase requests.
+- **Everything you type disappears** the next time Render deploys, restarts, or
+  wakes the service after it has been asleep. Free services sleep after 15
+  minutes with no visitors.
+- So: enter demo data shortly before you show it, not the week before.
+- Attachments behave the same way, which is why a showcase also sets
+  `ASME_UPLOADS_EPHEMERAL_OK=1`.
+
+If you would rather the demo survive restarts for a month at no cost, create
+Render's **free** Postgres instead and leave `ASME_DEMO_MODE` off: free
+databases are deleted about 30 days after creation, which is usually longer
+than a demonstration needs. Use the paid database only for the chapter's real
+installation - or, as planned here, build that on AWS.
+
+Skip sections 5-6's database steps if you are in showcase mode; everything else
+in this guide applies unchanged.
+
 ## 2. Before you start
 
 Have these ready:

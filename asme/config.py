@@ -247,6 +247,7 @@ class Settings:
     # because the alternative is attachment rows pointing at files that the host
     # deleted at the last deploy (see :meth:`validate`).
     uploads_ephemeral_ok: bool = False
+    demo_mode: bool = False
     upload_max_bytes: int = 25 * 1024 * 1024
     ops_changes_poll_seconds: int = 15
     ops_download_ttl_seconds: int = 300
@@ -326,6 +327,7 @@ class Settings:
             storage_backend=(_str("ASME_STORAGE_BACKEND", "local").lower() or "local"),
             upload_root=_str("ASME_UPLOAD_ROOT"),
             uploads_ephemeral_ok=_bool("ASME_UPLOADS_EPHEMERAL_OK", default=False),
+            demo_mode=_bool("ASME_DEMO_MODE", default=False),
             upload_max_bytes=_int("ASME_UPLOAD_MAX_MB", 25, minimum=1) * 1024 * 1024,
             ops_changes_poll_seconds=_int("ASME_OPS_POLL_SECONDS", 15, minimum=3),
             ops_download_ttl_seconds=_int("ASME_OPS_DOWNLOAD_TTL_SECONDS", 300, minimum=30),
@@ -364,12 +366,13 @@ class Settings:
                 "ASME_PUBLIC_BASE_URL is required in production when SMTP is configured: password reset e-mails "
                 "link to it, and the request Host header cannot be trusted for that."
             )
-        if self.is_production and self.database_url.startswith("sqlite"):
+        if self.is_production and self.database_url.startswith("sqlite") and not self.demo_mode:
             problems.append(
                 "ASME_DATABASE_URL is a SQLite file in production. Hosted containers get a fresh, empty filesystem "
                 "on every deploy and restart, so every member, work order and purchase request would be erased "
                 "without any error. Set ASME_DATABASE_URL to the PostgreSQL connection string of a managed database "
-                "(it starts with postgresql:// and ends with ?sslmode=require)."
+                "(it starts with postgresql:// and ends with ?sslmode=require), or set ASME_DEMO_MODE=1 if this "
+                "deployment is only a demonstration and its data is meant to disappear."
             )
         if self.is_production:
             # The bootstrap passwords create real accounts on a public address:
@@ -410,6 +413,14 @@ class Settings:
     def warnings(self) -> list[str]:
         """Things worth fixing that never block startup."""
         notes: list[str] = []
+        if self.demo_mode:
+            notes.append(
+                "ASME_DEMO_MODE is on: this deployment is a demonstration. "
+                + ("Its database is a file on the container's disk, so everything entered here disappears on the next deploy or restart. "
+                   if self.database_url.startswith("sqlite")
+                   else "")
+                + "Turn it off (and point ASME_DATABASE_URL at a managed PostgreSQL database) before any real chapter data is entered."
+            )
         # The bootstrap passwords are not here: they refuse startup (validate()).
         if self.is_production and not self.session_cookie_secure:
             notes.append("ASME_SESSION_COOKIE_SECURE is off; set it to 1 when serving over HTTPS.")

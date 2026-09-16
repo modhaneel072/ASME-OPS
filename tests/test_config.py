@@ -1,3 +1,4 @@
+import dataclasses
 import os
 
 from asme.config import PUBLISHED_DEFAULT_PASSWORD, Settings
@@ -206,3 +207,24 @@ def test_session_boot_token_is_stable_unless_set(monkeypatch):
     assert first.secret_key not in first.app_boot_token
     monkeypatch.setenv("ASME_APP_BOOT_TOKEN", "rotate-to-sign-everyone-out")
     assert Settings.from_env(env="development", secret_key="one-secret").app_boot_token == "rotate-to-sign-everyone-out"
+
+
+def test_demo_mode_allows_a_throwaway_database_and_says_so(monkeypatch):
+    monkeypatch.delenv("ASME_DATABASE_URL", raising=False)
+    strict = Settings.from_env(
+        env="production", secret_key="a-real-production-secret", database_url="sqlite:///inventory.db",
+        default_admin_password="a-real-admin-password", default_user_password="a-real-user-password", uploads_ephemeral_ok=True,
+    )
+    assert any("SQLite file in production" in p for p in strict.validate())
+    assert any("ASME_DEMO_MODE=1" in p for p in strict.validate()), "the refusal must name the way out"
+
+    demo = dataclasses.replace(strict, demo_mode=True)
+    assert not any("SQLite" in p for p in demo.validate())
+    notes = demo.warnings()
+    assert any("ASME_DEMO_MODE is on" in n and "disappears" in n for n in notes), notes
+
+    # A demonstration on a real database still says it is a demonstration.
+    hosted = dataclasses.replace(demo, database_url="postgresql://user:pw@host/db")
+    assert not any("SQLite" in p for p in hosted.validate())
+    assert any("ASME_DEMO_MODE is on" in n for n in hosted.warnings())
+    assert not any("disappears" in n for n in hosted.warnings())
