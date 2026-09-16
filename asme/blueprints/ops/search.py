@@ -6,7 +6,7 @@ from flask import request
 
 from asme.blueprints.ops import bp, ok, query_text
 from asme.ops import policy
-from asme.ops.serializers import asset_ref, category_ref, location_ref, project_ref, uid, user_ref
+from asme.ops.serializers import asset_ref, category_ref, location_ref, part_ref, project_ref, purchase_request_ref, uid, user_ref
 from asme.ops.services import search as search_service
 
 
@@ -34,6 +34,8 @@ def global_search():
                 "work_orders": [_work_order_hit(row) for row in results["work_orders"]],
                 "projects": [project_ref(row) for row in results["projects"]],
                 "assets": [asset_ref(row) for row in results["assets"]],
+                "parts": [part_ref(row) for row in results["parts"]],
+                "purchase_requests": [purchase_request_ref(row) for row in results["purchase_requests"]],
                 "locations": [location_ref(row) for row in results["locations"]],
                 "categories": [category_ref(row) for row in results["categories"]],
                 "users": [user_ref(row) for row in results["users"]],

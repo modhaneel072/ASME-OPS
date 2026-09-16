@@ -2,7 +2,7 @@ import pytest
 
 from asme.extensions import db as _db
 from asme.ops import policy
-from asme.ops.models import Asset, AuditEvent, Category, Location, Membership, OpsProject, Organization, Team, UserPreference
+from asme.ops.models import Asset, AuditEvent, Category, Location, Membership, OpsProject, Organization, Part, Team, UserPreference
 from asme.ops.services import setup_center
 from asme.services.errors import Forbidden
 
@@ -13,7 +13,7 @@ EXPECTED_LAYOUT = {
     "Organize Project Work": ["first_project", "categories", "parts", "procedure"],
     "Standardize Operations": ["maintenance_plan", "request_portal", "automation", "dashboard"],
 }
-UNAVAILABLE_STAGES = {"parts": 4, "procedure": 5, "maintenance_plan": 5, "request_portal": 3, "automation": 6, "dashboard": 7}
+UNAVAILABLE_TASKS = ("procedure", "maintenance_plan", "request_portal", "automation", "dashboard",)
 HREFS = {
     "chapter_profile": "/app/settings/chapter",
     "locations": "/app/locations",
@@ -39,21 +39,22 @@ def test_fresh_chapter_progress_layout_and_percent(client, org, users, api_login
     assert [phase["key"] for phase in payload["phases"]] == ["foundation", "project_work", "standardize"]
     tasks = _tasks(payload)
     for key, task in tasks.items():
-        assert set(task) == {"key", "title", "description", "estimated_minutes", "status", "stage", "href", "count", "optional"}
+        assert set(task) == {"key", "title", "description", "estimated_minutes", "status", "href", "count", "optional"}
         assert task["title"] and task["description"] and task["estimated_minutes"] > 0
-    for key, stage in UNAVAILABLE_STAGES.items():
-        assert tasks[key]["status"] == "unavailable" and tasks[key]["stage"] == stage and tasks[key]["count"] is None
+    for key in UNAVAILABLE_TASKS:
+        assert tasks[key]["status"] == "unavailable" and tasks[key]["count"] is None
     for key, href in HREFS.items():
         assert tasks[key]["href"] == href
-    assert tasks["chapter_profile"] == {**tasks["chapter_profile"], "status": "incomplete", "stage": None, "count": None, "optional": False}
+    assert tasks["chapter_profile"] == {**tasks["chapter_profile"], "status": "incomplete", "count": None, "optional": False}
     assert tasks["locations"]["status"] == "incomplete" and tasks["locations"]["count"] == 0  # bootstrap "General" is the default
     assert tasks["assets"]["status"] == "incomplete" and tasks["assets"]["count"] == 0
     assert tasks["teams_users"]["status"] == "incomplete" and tasks["teams_users"]["count"] == 3  # 3 members but no team yet
     assert tasks["officer_guide"]["status"] == "incomplete" and tasks["officer_guide"]["optional"] is True
     assert tasks["first_project"]["status"] == "incomplete" and tasks["first_project"]["count"] == 0
     assert tasks["categories"]["status"] == "complete" and tasks["categories"]["count"] == 14  # seeded categories
+    assert tasks["parts"]["status"] == "incomplete" and tasks["parts"]["count"] == 0
     assert [k for k, t in tasks.items() if t["optional"]] == ["officer_guide"]
-    assert payload["progress"] == {"completed": 1, "available": 6, "percent": 17}
+    assert payload["progress"] == {"completed": 1, "available": 7, "percent": 14}
     assert payload["banner_dismissed"] is False and payload["completed_at"] is None
 
 
@@ -127,8 +128,18 @@ def test_each_task_completes_from_live_data(client, org, users, api_login):
     _db.session.commit()
     assert status("categories") == {**status("categories"), "status": "complete", "count": 1}
 
+    # parts: five active parts
+    for index in range(4):
+        _db.session.add(Part(organization_id=org.id, name=f"Bearing {index}"))
+    _db.session.add(Part(organization_id=org.id, name="Discontinued", is_active=False))
+    _db.session.commit()
+    assert status("parts") == {**status("parts"), "status": "incomplete", "count": 4}
+    _db.session.add(Part(organization_id=org.id, name="Bearing 5"))
+    _db.session.commit()
+    assert status("parts") == {**status("parts"), "status": "complete", "count": 5}
+
     payload = client.get(URL).get_json()["payload"]
-    assert payload["progress"] == {"completed": 6, "available": 6, "percent": 100}
+    assert payload["progress"] == {"completed": 7, "available": 7, "percent": 100}
     assert _tasks(payload)["officer_guide"]["status"] == "incomplete"  # optional, not in the percentage
 
 
@@ -169,7 +180,7 @@ def test_complete_requires_chapter_setup_manage_and_audits(client, org, users, r
     event = AuditEvent.query.filter_by(event_type="organization.setup_completed").one()
     assert event.entity_type == "organization" and event.entity_id == str(org.id) and event.actor_user_id == users["admin"].id
     assert event.before_json["setup_completed_at"] is None and event.after_json["setup_completed_at"] is not None
-    assert event.metadata_json["progress"]["available"] == 6
+    assert event.metadata_json["progress"]["available"] == 7
 
     # idempotent: the timestamp is kept and no second audit row is written
     again = client.post(URL + "/complete", json={})
@@ -206,10 +217,12 @@ def test_counts_are_scoped_to_the_organization(client, org, users, api_login):
             Team(organization_id=other.id, name="Foreign Team"),
             OpsProject(organization_id=other.id, name="Foreign", code="FRN"),
             *[Asset(organization_id=other.id, name=f"Foreign asset {i}") for i in range(5)],
+            *[Part(organization_id=other.id, name=f"Foreign part {i}") for i in range(5)],
         ]
     )
     _db.session.commit()
     api_login(users["admin"])
     tasks = _tasks(client.get(URL).get_json()["payload"])
     assert tasks["locations"]["count"] == 0 and tasks["assets"]["count"] == 0 and tasks["first_project"]["count"] == 0
+    assert tasks["parts"]["count"] == 0 and tasks["parts"]["status"] == "incomplete"
     assert tasks["teams_users"]["status"] == "incomplete" and tasks["chapter_profile"]["status"] == "incomplete"

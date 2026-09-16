@@ -2,7 +2,19 @@ import pytest
 
 from asme.extensions import db as _db
 from asme.ops import policy
-from asme.ops.models import Asset, Category, Location, Membership, OpsProject, Organization, ProjectMember, WorkOrder, WorkOrderAssignee
+from asme.ops.models import (
+    Asset,
+    Category,
+    Location,
+    Membership,
+    OpsProject,
+    Organization,
+    Part,
+    ProjectMember,
+    PurchaseRequest,
+    WorkOrder,
+    WorkOrderAssignee,
+)
 from asme.ops.services import search
 from asme.ops.validation import ValidationErrors
 from tests.ops.conftest import make_user
@@ -54,7 +66,7 @@ def test_search_returns_every_group_with_visibility_applied(client, org, users, 
     payload = response.get_json()["payload"]
     assert payload["query"] == "rover"
     results = payload["results"]
-    assert set(results) == {"work_orders", "projects", "assets", "locations", "categories", "users"}
+    assert set(results) == {"work_orders", "projects", "assets", "parts", "purchase_requests", "locations", "categories", "users"}
     assert results["work_orders"] == [
         {"id": results["work_orders"][0]["id"], "number": 12, "title": "Replace rover wheel bearing", "status": "in_progress", "priority": "high"}
     ]
@@ -128,6 +140,68 @@ def test_requester_sees_projects_only(client, org, requester, dataset, api_login
     assert [p["code"] for p in results["projects"]] == ["CCR"]
     assert results["work_orders"] == [] and results["assets"] == [] and results["locations"] == []
     assert results["categories"] == [] and results["users"] == []
+    assert results["parts"] == [] and results["purchase_requests"] == []
+
+
+def test_parts_group_needs_inventory_read(client, org, users, requester, dataset, api_login):
+    _db.session.add_all(
+        [
+            Part(organization_id=org.id, name="Rover Wheel Bearing", sku="BRG-01"),
+            Part(organization_id=org.id, name="Hex Nut", manufacturer_part_number="ROVER-77"),
+            Part(organization_id=org.id, name="Shelf Label", qr_code="QR-ROVER-9"),
+            Part(organization_id=org.id, name="Old Rover Bolt", is_active=False),
+        ]
+    )
+    _db.session.commit()
+
+    api_login(users["member"])  # full_member holds inventory.read
+    results = client.get(URL + "?q=rover").get_json()["payload"]["results"]
+    assert [p["name"] for p in results["parts"]] == ["Hex Nut", "Rover Wheel Bearing", "Shelf Label"]
+    bearing = results["parts"][1]
+    assert bearing == {"id": bearing["id"], "name": "Rover Wheel Bearing", "sku": "BRG-01", "unit": "each"}
+
+    api_login(requester)  # no inventory.read
+    assert client.get(URL + "?q=rover").get_json()["payload"]["results"]["parts"] == []
+
+
+def test_purchase_requests_group_follows_the_read_rule(client, org, users, dataset, api_login):
+    lead = make_user("Pat Projectlead", "pat@uiowa.edu", ops_role="project_lead", org=org)
+    dataset["rover"].members.append(ProjectMember(user_id=lead.id))
+    _db.session.add_all(
+        [
+            PurchaseRequest(organization_id=org.id, number=12, title="Rover wheel bearings", requester_user_id=users["member"].id),
+            PurchaseRequest(organization_id=org.id, number=13, title="Rover paint", requester_user_id=users["lead"].id),
+            PurchaseRequest(
+                organization_id=org.id,
+                number=14,
+                title="Rover fasteners",
+                requester_user_id=users["lead"].id,
+                project_id=dataset["rover"].id,
+            ),
+        ]
+    )
+    _db.session.commit()
+
+    api_login(users["member"])  # full member: own requests only
+    results = client.get(URL + "?q=rover").get_json()["payload"]["results"]
+    assert [r["number"] for r in results["purchase_requests"]] == [12]
+    assert results["purchase_requests"][0] == {
+        "id": results["purchase_requests"][0]["id"],
+        "number": 12,
+        "display_number": "PR-12",
+        "title": "Rover wheel bearings",
+        "status": "draft",
+    }
+
+    api_login(lead)  # project lead: own plus the ones on their project
+    assert [r["number"] for r in client.get(URL + "?q=rover").get_json()["payload"]["results"]["purchase_requests"]] == [14]
+
+    treasurer = make_user("Tess Treasurer", "tess@uiowa.edu", ops_role="treasurer", org=org)
+    api_login(treasurer)  # purchase.review reads everything
+    assert [r["number"] for r in client.get(URL + "?q=rover").get_json()["payload"]["results"]["purchase_requests"]] == [14, 13, 12]
+    by_number = client.get(URL + "?q=PR-13").get_json()["payload"]["results"]["purchase_requests"]
+    assert [r["number"] for r in by_number] == [13]
+    assert [r["number"] for r in client.get(URL + "?q=14").get_json()["payload"]["results"]["purchase_requests"]] == [14]
 
 
 def test_query_validation_and_limit(client, org, users, dataset, api_login):

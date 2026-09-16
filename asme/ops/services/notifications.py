@@ -28,6 +28,9 @@ NOTIFICATION_TYPES = (
     "milestone.at_risk",
     "asset.offline",
     "membership.role_changed",
+    "inventory.low_stock",
+    "purchase_request.needs_review",
+    "purchase_request.status_changed",
     "system",
 )
 

@@ -365,14 +365,23 @@ def test_reset_password_validation_and_invalid_tokens(client, org, users):
     assert check_password_hash(_db.session.get(User, member.id).password_hash, PASSWORD)
 
 
-def test_reset_password_is_rate_limited(client, org, users, limiter):
+def test_reset_password_throttles_guessing_but_never_a_valid_link(client, org, users, limiter):
+    """Guessing is throttled per address; a real link still works.
+
+    Everyone on campus shares one address, so counting a member's already-used
+    link against the guessing budget would lock the chapter out of resets.
+    """
     token = _add_token(users["member"])
     for guess in ("guess-1", "guess-2"):
         response = client.post("/api/v1/auth/reset-password", json={"token": guess, "password": NEW_PASSWORD, "confirm_password": NEW_PASSWORD})
         assert response.status_code == 404
-    blocked = client.post("/api/v1/auth/reset-password", json={"token": token, "password": NEW_PASSWORD, "confirm_password": NEW_PASSWORD})
+    blocked = client.post("/api/v1/auth/reset-password", json={"token": "guess-3", "password": NEW_PASSWORD, "confirm_password": NEW_PASSWORD})
     assert blocked.status_code == 429 and blocked.get_json()["code"] == "rate_limited" and blocked.get_json()["retry_after"] >= 1
-    assert identity.find_valid_reset(token) is not None
+
+    # The member holding a genuine link is served even while guessing is blocked.
+    allowed = client.post("/api/v1/auth/reset-password", json={"token": token, "password": NEW_PASSWORD, "confirm_password": NEW_PASSWORD})
+    assert allowed.status_code == 200, allowed.get_json()
+    assert identity.find_valid_reset(token) is None  # single use
 
 
 # --------------------------------------------------------------------------- change password

@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from asme.extensions import db as _db
 from asme.ops import policy
-from asme.ops.models import Asset, Notification, OpsProject, Organization, WorkOrder
+from asme.ops.models import Asset, Notification, OpsProject, Organization, Part, PurchaseRequest, WorkOrder
 from asme.ops.services import notifications
 from asme.ops.types import utcnow
 from tests.ops.conftest import make_user
@@ -37,10 +37,14 @@ def test_list_notifications_shapes_hrefs_and_unread_count(client, org, users, ct
     rows = _seed_notifications(ctx_admin, org, users, count=2)
     project = OpsProject(organization_id=org.id, name="Rover", code="CCR")
     asset = Asset(organization_id=org.id, name="Printer", code="P1")
-    _db.session.add_all([project, asset])
+    part = Part(organization_id=org.id, name="Hex Bolt")
+    purchase_request = PurchaseRequest(organization_id=org.id, number=4, title="Bolts", requester_user_id=users["member"].id)
+    _db.session.add_all([project, asset, part, purchase_request])
     _db.session.flush()
     notifications.notify(ctx_admin, [users["member"].id], "project.added", "Added to Rover", entity=project)
     notifications.notify(ctx_admin, [users["member"].id], "asset.offline", "Printer offline", entity=asset)
+    notifications.notify(ctx_admin, [users["member"].id], "inventory.low_stock", "Hex Bolt is low on stock", entity=part)
+    notifications.notify(ctx_admin, [users["member"].id], "system", "PR-4 approved", entity=purchase_request)
     notifications.notify(ctx_admin, [users["member"].id], "system", "Welcome")
     # another user's notification never shows up in the member's list
     notifications.notify(ctx_admin, [users["lead"].id], "system", "For Lee")
@@ -51,7 +55,7 @@ def test_list_notifications_shapes_hrefs_and_unread_count(client, org, users, ct
     assert response.status_code == 200, response.get_json()
     payload = response.get_json()["payload"]
     assert set(payload) >= {"items", "next_cursor", "total", "notifications", "unread_count"}
-    assert payload["total"] == 5 and payload["unread_count"] == 5 and payload["next_cursor"] is None
+    assert payload["total"] == 7 and payload["unread_count"] == 7 and payload["next_cursor"] is None
     assert payload["notifications"] == payload["items"]
     items = payload["items"]
     assert [item["title"] for item in items[-2:]] == ["Assigned #2", "Assigned #1"]  # newest first
@@ -62,6 +66,10 @@ def test_list_notifications_shapes_hrefs_and_unread_count(client, org, users, ct
     assert by_title["Assigned #1"]["entity_type"] == "work_order" and by_title["Assigned #1"]["entity_id"] == str(wo.id)
     assert by_title["Added to Rover"]["href"] == f"/app/projects/{project.id}"
     assert by_title["Printer offline"]["href"] == f"/app/assets/{asset.id}"
+    assert by_title["Hex Bolt is low on stock"]["href"] == f"/app/parts/{part.id}"
+    assert by_title["Hex Bolt is low on stock"]["entity_type"] == "part"
+    assert by_title["PR-4 approved"]["href"] == f"/app/purchase-requests/{purchase_request.id}"
+    assert by_title["PR-4 approved"]["entity_type"] == "purchase_request"
     assert by_title["Welcome"]["href"] is None and by_title["Welcome"]["entity_type"] is None
     assert all(item["read_at"] is None for item in items)
     assert "For Lee" not in by_title

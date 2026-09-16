@@ -211,12 +211,16 @@ def reset_password():
     limiter = rate_limiter()
     ip = request_client_ip()
     counter = ip  # per address: tokens differ on every guess
-    blocked, retry_after = limiter.is_limited(ip, counter, RESET_NAMESPACE)
-    if blocked:
-        return _rate_limited("Too many password reset attempts. Try again later.", retry_after)
 
+    # The limiter exists to stop token guessing, so only a failed attempt is
+    # counted and only a failed attempt is refused. A member holding a real link
+    # is never turned away because other people on the same campus address
+    # clicked links that had already been used.
     row = _usable_reset(data["token"])
     if row is None:
+        blocked, retry_after = limiter.is_limited(ip, counter, RESET_NAMESPACE)
+        if blocked:
+            return _rate_limited("Too many password reset attempts. Try again later.", retry_after)
         limiter.record_failure(ip, counter, RESET_NAMESPACE)
         return _invalid_token()
 

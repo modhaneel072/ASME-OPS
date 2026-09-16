@@ -1,10 +1,10 @@
 # Implementation status
 
-Updated: 2026-09-14
+Updated: 2026-09-16
 
 ## Current stage
 
-**Stage 1 – Foundation and app shell** (in progress). Stage 0 baseline is complete. The repository has been reduced to ASME Ops only (see "Repository reduced to ASME Ops" below).
+**Stage 4 – Parts inventory and purchase requests** (complete; see the Stage 4 section below). Stages 1–2 shipped the foundation, the app shell and the projects / work-orders vertical. The repository has been reduced to ASME Ops only (see "Repository reduced to ASME Ops" below).
 
 ## Baseline (Stage 0) – facts recorded before any change
 
@@ -43,18 +43,45 @@ The owner confirmed that everything outside ASME Ops is removed: the public webs
 
 The legacy security findings listed under "Known defects" for the HTML routes `/transact`, `/attendance/scan`, `/print/submit`, kiosk `/pair/*`, `/export` and the `/forgot-password` page no longer apply: those routes were removed. The related JSON endpoints in `api_legacy` still exist and are part of the pending decision below.
 
+## Stage 4 – Parts inventory and purchase requests (2026-09-16)
+
+Plan: `docs/plans/2026-09-14-asme-ops-stage4-inventory-purchasing.md`. Migration `0004_ops_inventory` (down revision `0003_ops_foundation`).
+
+### Done
+
+| Area | What shipped | Evidence |
+|---|---|---|
+| Data model | `ops_part_types`, `ops_parts`, `ops_part_vendors`, `ops_part_assets`, `ops_inventory_balances`, `ops_inventory_transactions` (append-only), `ops_work_order_parts`, `ops_purchase_requests`, `ops_purchase_request_items`, `ops_purchase_request_events`, plus `ops_cost_entries.inventory_transaction_id` | `asme/ops/models/inventory.py`, `migrations/versions/0004_ops_inventory_parts_inventory_and_purchase_requests.py`, `tests/ops/test_migration_0004.py` |
+| Ledger | One primitive writes stock: `inventory_ledger.post(...)` locks the part and the `(part, location)` balance, refuses a negative result with `409 insufficient_stock` writing nothing, re-weights `part.unit_cost` on priced receipts, and owns the single low-stock definition (`stock_state`). Transactions are immutable through the ORM (mapper listeners plus a bulk-update/delete guard). `reconcile(org_id)` reports and never corrects; `python manage.py reconcile-ops-inventory` prints mismatches and exits 1 when any exist. | `asme/ops/services/inventory_ledger.py`, `tests/ops/test_inventory_ledger.py` (16 cases, including the 200-operation randomized sequence and the immutability tests) |
+| Parts catalogue and inventory | `GET/POST /parts`, `GET/PATCH /parts/:id`, `GET /parts/by-code/:code`, `PUT /parts/:id/vendors`, `PUT /parts/:id/assets`, `GET /parts/:id/inventory`, `GET/POST /parts/:id/transactions`, `GET/POST /part-types`, `POST /inventory/transfers`, `POST /inventory/cycle-counts`, `GET /inventory/cycle-counts/sheet`, `GET /inventory/low-stock`, `GET /inventory/transactions` | `asme/ops/services/{parts,inventory}.py`, `asme/blueprints/ops/parts.py`, `tests/ops/test_parts_api.py` (15), `tests/ops/test_inventory_api.py` (19) |
+| Work-order parts | `GET/POST /work-orders/:id/parts`, `PATCH/DELETE /work-orders/:id/parts/:lineId`, `/reserve`, `/release`, `/kit`, `/stage`, `/issue`, `/return` and `POST /work-orders/:id/parts/release-all`. Issuing writes a system `CostEntry(type="parts", inventory_transaction_id=…)` that reaches the operations report `parts_cost` and project health `budget.used`; a return writes the matching credit. Completing reports `parts_outstanding` and never releases reservations. Parts cost entries answer `409 inventory_linked` on delete. | `asme/ops/services/work_order_parts.py`, `asme/blueprints/ops/work_order_parts.py`, `tests/ops/test_work_order_parts_api.py` (15) |
+| Purchase requests | `GET/POST /purchase-requests`, `POST /purchase-requests/from-low-stock`, `GET/PATCH /purchase-requests/:id`, the actions `submit`, `approve`, `decline`, `request-changes`, `order`, `receive`, `cancel`, `reopen`, and `GET/PUT /purchasing/settings`. Receiving posts `receipt` rows against the ledger and updates `part_vendors.last_price`; ordering stamps `last_ordered_at`. Self-approval is `409 self_approval`; an unreadable request is 404. | `asme/ops/services/purchase_requests.py`, `asme/blueprints/ops/purchase_requests.py`, `tests/ops/test_purchase_requests_api.py` (17), `tests/ops/test_purchase_request_workflow.py` (14) |
+| Permissions | New key `purchase.advisor_review`; `inventory.read` and `purchase.submit` added to the full-member chapter grant (and to `project_lead`, `team_lead`), `inventory.read` to `shop_operator`, `inventory.read` + `vendor.read` + `purchase.advisor_review` to `faculty_advisor`; `purchase.review` dropped from `inventory_manager`. | `asme/ops/permissions.py`, `docs/permissions-matrix.md`, `tests/ops/test_permissions_registry.py` |
+| Shared integration | `entities.resolve` segments `parts` and `purchase-requests`, so comments and attachments work on both over HTTP; change-feed visibility for `part`, `part_type` and `purchase_request`; search groups `parts` and `purchase_requests`; the Setup Center `parts` task is live; notification hrefs `/app/parts/<id>` and `/app/purchase-requests/<id>`; events `ops.inventory.low_stock` and `ops.purchase_request.status_changed`. | `asme/ops/services/{entities,changes,search,setup_center}.py`, `asme/ops/serializers/notifications.py`, `tests/ops/test_comments_api.py`, `tests/ops/test_attachments_api.py`, `tests/ops/test_changes_feed.py`, `tests/ops/test_search_api.py`, `tests/ops/test_setup_center.py` |
+| Frontend | `/parts` and `/parts/:id` (master-detail with All / Low stock / Out of stock tabs, filters, stock dialogs, vendor and spare-for editors, transaction history), `/purchase-requests` and `/purchase-requests/:id` (tabs, line items, approval timeline, action bar from `available_actions`, receive dialog, purchasing settings), and the work-order Parts section with its readiness badge. | `apps/ops-web/src/features/parts/*`, `src/features/purchase-requests/*`, `src/features/work-orders/WorkOrderPartsSection.tsx`; `parts.test.tsx` (24), `purchase-requests.test.tsx` (28), `features/work-orders/parts.test.tsx` (17) |
+
+### Deferred
+
+- **Comments and files on the parts and purchase-request screens.** The API accepts both segments, but the SPA does not mount the comment and attachment cards there: `features/work-orders/CommentsCard.tsx` and `FilesCard.tsx` take a `workOrder` prop and need a generic `{ segment, id, canComment, canManage }` shape first.
+- **A whole-location cycle count screen.** `GET /inventory/cycle-counts/sheet` and the 200-line `POST /inventory/cycle-counts` support it; the UI counts one part at one location.
+- **A chapter-wide inventory activity screen.** `GET /inventory/transactions` (date range, part / work order / purchase request filters) has no page; part history is shown unfiltered on the part detail.
+- **A "show retired parts" control.** The list always sends `filter[active]=true`; a deactivated part is still reachable by deep link.
+- **`location_count` on the list serializer.** `GET /parts` carries the default location, not a count of the locations holding stock, so the list column shows the former.
+- **PostgreSQL verification of `0004_ops_inventory`.** Exercised on SQLite only (upgrade → downgrade to `0003_ops_foundation` → upgrade); the CI/staging run is still required, as for `0002` and `0003`.
+
 ## Pending decisions
 
 - **Legacy backend services and their data.** Tool checkout inventory (`asme/services/inventory.py`), 3D print requests (`fabrication.py`), attendance (`attendance.py`), room scheduling (`scheduling.py` with the Google/Outlook calendar integrations) and Launchpad onboarding (`asme/services/onboarding`) remain, with their models, migrations, events, outbox handlers and the JSON blueprints `asme/blueprints/api_v1.py` and `asme/blueprints/api_legacy.py`, but have no user interface. Production databases may hold members, items, checkouts and attendance records. Options: keep them as API-only services, migrate the data into ASME Ops modules (parts inventory in Stage 4, events in Stage 3), or export and retire them. Until decided they must keep importing, stay registered and keep passing their tests; `OUTLOOK_CALENDAR_SETUP.md`, `scripts/outlook_sync_doctor.py` and `scripts/setup_bambu_print.ps1` stay with them.
 
-## In progress
+## Shipped
 
 - Stage 1: `asme/ops` package (models, permissions, policy, audit, storage), migration `0003_ops_foundation`, ops API skeleton, SPA scaffold and design tokens, Setup Center, teams/users/locations/categories.
+- Stage 2: projects + milestones, the work-orders vertical slice, assets and asset types, vendors, comments, attachments, notifications, change feed, global search and the operations report.
+- Stage 4: parts inventory, work-order parts and purchase requests (see the Stage 4 section above).
 
 ## Not started
 
-- Stage 2: projects + work orders vertical slice, operations dashboard, seeds, Playwright screenshots.
-- Stages 3–8 (requests, messaging, events, assets/inventory/purchasing beyond selectors, procedures, plans, meters, automations, reporting suite). The former "public-site projection" item is dropped: there is no public site in this repository.
+- Stage 3 (requests and messaging), Stage 5 (procedures, maintenance plans, meters), Stage 6 (automations), Stage 7 (dashboards) and Stage 8 (reporting suite and hardening). The former "public-site projection" item is dropped: there is no public site in this repository.
 
 ## Blockers
 
@@ -64,8 +91,8 @@ The legacy security findings listed under "Known defects" for the HTML routes `/
 ## Known defects (pre-existing, found during the baseline read; not fixed by Stage 1)
 
 - Fixed 2026-09-14: `Settings.app_boot_token` used to be random per process unless `ASME_APP_BOOT_TOKEN` was set, which signed users out on every restart and between gunicorn workers. It now defaults to a value derived from `ASME_SECRET_KEY`.
-- "Low stock" has three different definitions (API serializer, `inventory.low_stock_items`, legacy dashboard). Tracked for Stage 4 (parts inventory).
-- `POST /api/v1/checkouts` replays `Idempotency-Key` globally (not per user); a colliding key returns another user's loan. Tracked for Stage 4.
+- "Low stock" has three different definitions in the legacy services (API serializer, `inventory.low_stock_items`, legacy dashboard). ASME Ops has exactly one, `inventory_ledger.stock_state` (Stage 4); the legacy copies live on until the legacy-services decision below is taken.
+- `POST /api/v1/checkouts` replays `Idempotency-Key` globally (not per user); a colliding key returns another user's loan. This is the legacy tool-checkout API, which Stage 4 did not touch; it rides on the legacy-services decision.
 - Several legacy API views cast query ids with bare `int()` and return 500 instead of 400 on bad input. Tracked for Stage 8 hardening.
 - Migration `0002` backfills booleans with integer literals; it has not been verified on PostgreSQL. Migration `0003` (ops) uses portable types; both must be exercised against PostgreSQL in CI before a production upgrade.
 - **Security (legacy, found at baseline):** several legacy write routes and dumps did not check a login. The HTML ones (`/transact`, `/attendance/scan`, `/print/submit`, kiosk `/pair/*`, `/export`) and the `/forgot-password` page that flashed the live reset link were removed on 2026-09-14. Still to re-audit as part of the legacy-services decision: the `api_legacy` JSON endpoints `/api/inventory/transact`, `/api/attendance/scan`, `/api/print/submit` and the `/api/bootstrap` dump were flagged at baseline and must be checked again before they are relied on; roster import (`POST /api/v1/roster/import`) still returns generated passwords in its `credentials` list; the login rate limiter is per-process (`ASME_TRUSTED_PROXY_COUNT` now controls how `X-Forwarded-For` is trusted). None of these are reachable through the `/api/v1` ops endpoints.

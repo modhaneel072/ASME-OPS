@@ -1,4 +1,4 @@
-import { ArrowRight, Bell, ClipboardList, Cpu, FolderKanban, MapPin, Plus, Rocket, Tag, UserRound, type LucideIcon } from 'lucide-react'
+import { ArrowRight, Bell, ClipboardList, Cpu, FolderKanban, MapPin, Package, Plus, Rocket, ShoppingCart, Tag, UserRound, type LucideIcon } from 'lucide-react'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { errorMessage } from '@/api/client'
@@ -18,6 +18,8 @@ const GROUP_ICONS: Record<SearchGroupKey, LucideIcon> = {
   work_orders: ClipboardList,
   projects: FolderKanban,
   assets: Cpu,
+  parts: Package,
+  purchase_requests: ShoppingCart,
   locations: MapPin,
   categories: Tag,
   users: UserRound,
@@ -145,7 +147,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
   else if (enabled && search.data) liveMessage = resultCount === 0 ? `No results for ${query}.` : `${resultCount} ${resultCount === 1 ? 'result' : 'results'} for ${query}.`
 
   return (
-    <Dialog open={open} onClose={onClose} title="Search ASME Ops" description="Work orders, projects, assets, locations, categories and people." size="lg">
+    <Dialog open={open} onClose={onClose} title="Search ASME Ops" description="Work orders, projects, assets, parts, purchase requests, locations, categories and people." size="lg">
       <div className={styles.palette}>
         <SearchField
           value={value}

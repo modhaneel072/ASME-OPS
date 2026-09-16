@@ -10,8 +10,10 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy import JSON, DateTime, ForeignKey, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
@@ -23,6 +25,30 @@ from asme.extensions import db
 
 def utcnow() -> datetime:
     return datetime.now(timezone.utc)
+
+
+_log = logging.getLogger("asme.ops.types")
+
+
+def org_timezone(org) -> ZoneInfo:
+    """The chapter's own time zone, falling back to UTC when it is unset or unknown."""
+    name = (getattr(org, "timezone", None) or "").strip() or "UTC"
+    try:
+        return ZoneInfo(name)
+    except (ZoneInfoNotFoundError, ValueError):
+        _log.warning("organization %s has unknown timezone %r; using UTC", getattr(org, "slug", "?"), name)
+        return ZoneInfo("UTC")
+
+
+def org_today(org, now: datetime | None = None) -> date:
+    """Today's date where the chapter is.
+
+    Due dates are days on a calendar, not instants: a milestone due on the 16th
+    has until the end of the 16th in Iowa City, which is 05:00 UTC on the 17th.
+    Comparing against the UTC date marks it missed while the team is still in
+    the shop.
+    """
+    return (now or utcnow()).astimezone(org_timezone(org)).date()
 
 
 def as_utc(value: datetime | None) -> datetime | None:

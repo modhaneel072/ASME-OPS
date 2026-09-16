@@ -23,9 +23,9 @@ from asme.ops.models import AuditEvent, CostEntry, Membership, Milestone, OpsPro
 from asme.ops.models.projects import PROJECT_ROLES, PROJECT_STATUSES, PROJECT_VISIBILITIES, RISK_LEVELS
 from asme.ops.models.work import OPEN_STATUSES
 from asme.ops.serializers import team_ref
-from asme.ops.serializers.projects import effective_milestone_status, milestone as serialize_milestone, today_utc
-from asme.ops.services import audit_events, notifications
-from asme.ops.types import parse_uuid, utcnow
+from asme.ops.serializers.projects import effective_milestone_status, milestone as serialize_milestone
+from asme.ops.services import audit_events, notifications, purchase_requests
+from asme.ops.types import org_today, parse_uuid, utcnow
 from asme.ops.validation import Field, ValidationErrors, validate
 from asme.services.errors import Conflict, NotFound, Validation
 
@@ -223,7 +223,7 @@ def stats_for(ctx, projects) -> dict[UUID, dict]:
     if not ids:
         return {}
     now = utcnow()
-    today = today_utc()
+    today = org_today(ctx.org, now)
     stats = {
         pid: {"open_work_orders": 0, "overdue_work_orders": 0, "completion_percent": 0, "next_milestone": None, "member_count": 0}
         for pid in ids
@@ -645,7 +645,7 @@ def activity_query(ctx, project: OpsProject):
 
 def health(ctx, project: OpsProject) -> dict:
     now = utcnow()
-    today = today_utc()
+    today = org_today(ctx.org, now)
     status_rows = db.session.execute(
         select(WorkOrder.status, func.count(WorkOrder.id)).where(WorkOrder.project_id == project.id).group_by(WorkOrder.status)
     ).all()
@@ -682,6 +682,8 @@ def health(ctx, project: OpsProject) -> dict:
     used = Decimal(str(used or 0))
     amount = project.budget_amount
     remaining = (Decimal(amount) - used) if amount is not None else None
+    # Money already promised to this project through approved purchase requests.
+    committed = purchase_requests.committed_total(project)
 
     member_count = int(db.session.scalar(select(func.count(ProjectMember.id)).where(ProjectMember.project_id == project.id)) or 0)
     teams = list(db.session.scalars(select(Team).where(Team.project_id == project.id).order_by(Team.name.asc())))
@@ -710,6 +712,7 @@ def health(ctx, project: OpsProject) -> dict:
         "budget": {
             "amount": float(amount) if amount is not None else None,
             "used": float(used),
+            "committed": float(committed),
             "remaining": float(remaining) if remaining is not None else None,
         },
         "members": member_count,

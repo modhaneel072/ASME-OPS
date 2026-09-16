@@ -96,6 +96,24 @@ def vendor_ref(vendor) -> dict | None:
     return {"id": uid(vendor.id), "name": vendor.name}
 
 
+def part_ref(part) -> dict | None:
+    if part is None:
+        return None
+    return {"id": uid(part.id), "name": part.name, "sku": part.sku, "unit": part.unit}
+
+
+def purchase_request_ref(purchase_request) -> dict | None:
+    if purchase_request is None:
+        return None
+    return {
+        "id": uid(purchase_request.id),
+        "number": purchase_request.number,
+        "display_number": f"PR-{purchase_request.number}",
+        "title": purchase_request.title,
+        "status": purchase_request.status,
+    }
+
+
 def role_ref(role) -> dict | None:
     if role is None:
         return None

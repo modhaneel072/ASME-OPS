@@ -12,6 +12,10 @@ delivered, so a new audited entity cannot leak simply by existing.
 * ``asset`` – the asset must be readable (private-project assets are hidden);
 * ``comment`` / ``attachment`` – resolved through the entity they hang off;
 * ``saved_filter`` – the caller's own, or one shared with them;
+* ``part`` / ``part_type`` – any member holding ``inventory.read`` (inventory
+  transactions are not audited at all: the ledger is its own history);
+* ``purchase_request`` – the plan's read rule, reached through
+  ``entities.visible_purchase_requests_query``;
 * ``membership`` – only with ``user.manage``/``audit.read``, plus the caller's own;
 * chapter-wide reference data (locations, categories, asset types, vendors,
   teams, the chapter itself) – any member holding the matching read permission.
@@ -198,6 +202,31 @@ def _readable_asset_ids(ctx, raw_ids) -> set[str]:
     return {str(row[0]) for row in query.all()}
 
 
+def _readable_inventory_ids(model):
+    """Parts and part types are chapter reference data behind ``inventory.read``."""
+
+    def resolve(ctx, raw_ids) -> set[str]:
+        ids = _uuids(raw_ids)
+        if not ids or not ctx.has("inventory.read"):
+            return set()
+        stmt = select(model.id).where(model.organization_id == ctx.org.id, model.id.in_(ids))
+        return {str(value) for value in db.session.scalars(stmt)}
+
+    return resolve
+
+
+def _readable_purchase_request_ids(ctx, raw_ids) -> set[str]:
+    """The plan's purchase-request read rule, reached through ``entities``."""
+    from asme.ops.models import PurchaseRequest
+    from asme.ops.services.entities import visible_purchase_requests_query
+
+    ids = _uuids(raw_ids)
+    if not ids:
+        return set()
+    query = visible_purchase_requests_query(ctx).filter(PurchaseRequest.id.in_(ids)).with_entities(PurchaseRequest.id)
+    return {str(row[0]) for row in query.all()}
+
+
 def _readable_saved_filter_ids(ctx, raw_ids) -> set[str]:
     """Own filters, plus ones shared with the whole chapter or with a team the
     caller belongs to."""
@@ -254,13 +283,16 @@ def _readable_child_ids(model):
 
 
 def _build_resolvers() -> dict:
-    from asme.ops.models import Attachment, Comment
+    from asme.ops.models import Attachment, Comment, Part, PartType
 
     return {
         "work_order": _readable_work_order_ids,
         "project": _readable_project_ids,
         "milestone": _readable_milestone_ids,
         "asset": _readable_asset_ids,
+        "part": _readable_inventory_ids(Part),
+        "part_type": _readable_inventory_ids(PartType),
+        "purchase_request": _readable_purchase_request_ids,
         "saved_filter": _readable_saved_filter_ids,
         "membership": _readable_membership_ids,
         "comment": _readable_child_ids(Comment),

@@ -58,6 +58,8 @@ export function countLabel(task: Pick<SetupTask, 'key' | 'count' | 'status'>): s
       return `${n} ${plural(n, 'project')}`
     case 'categories':
       return `${n} ${plural(n, 'category', 'categories')}`
+    case 'parts':
+      return `${n} active ${plural(n, 'part')}`
     default:
       return `${n} so far`
   }

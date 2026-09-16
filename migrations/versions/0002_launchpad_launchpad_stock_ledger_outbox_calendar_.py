@@ -353,10 +353,10 @@ def _backfill_data():
         ") WHERE user_id IS NULL AND member_id IS NOT NULL"
     ))
     bind.execute(sa.text("UPDATE events SET kind = 'meeting' WHERE kind IS NULL OR kind = ''"))
-    bind.execute(sa.text("UPDATE projects SET is_joinable = 1 WHERE is_joinable IS NULL"))
+    bind.execute(sa.text("UPDATE projects SET is_joinable = true WHERE is_joinable IS NULL"))
     bind.execute(sa.text(
         "UPDATE items SET item_type = COALESCE(NULLIF(item_type, ''), 'tool'), "
-        "is_consumable = COALESCE(is_consumable, 0), active = COALESCE(active, 1), "
+        "is_consumable = COALESCE(is_consumable, false), active = COALESCE(active, true), "
         "min_stock_threshold = COALESCE(min_stock_threshold, 0)"
     ))
 

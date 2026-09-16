@@ -93,5 +93,6 @@ export function baseHandlers(): Record<string, MockHandler> {
     'GET /saved-filters': { personal: [], shared: [] },
     'GET /work-orders/:id/comments': emptyList,
     'GET /work-orders/:id/attachments': emptyList,
+    'GET /work-orders/:id/parts': { items: [], work_order_parts: [], readiness_summary: 'none', parts_outstanding: 0 },
   }
 }

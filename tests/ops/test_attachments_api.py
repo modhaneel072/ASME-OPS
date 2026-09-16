@@ -447,6 +447,57 @@ def test_cross_organization_ids_are_not_found(client, org, users, api_login):
     assert client.get("/api/v1/teams/abc/attachments").status_code == 404
 
 
+def test_attachments_resolve_on_parts_and_purchase_requests(org, users, ctx_member, ctx_requester, store):
+    """``parts`` and ``purchase-requests`` resolve through ``entities`` with their
+    own read rules."""
+    from asme.ops.models import Part, PurchaseRequest
+    from asme.services.errors import NotFound
+
+    part = Part(organization_id=org.id, name="Hex Bolt")
+    mine = PurchaseRequest(organization_id=org.id, number=_next_number(), title="Bolts", requester_user_id=users["member"].id)
+    theirs = PurchaseRequest(organization_id=org.id, number=_next_number(), title="Paint", requester_user_id=users["lead"].id)
+    _db.session.add_all([part, mine, theirs])
+    _db.session.commit()
+
+    entity_type, obj, rows = attachments_service.list_for(ctx_member, "parts", part.id)
+    assert entity_type == "part" and obj is part and rows == []
+    entity_type, obj, rows = attachments_service.list_for(ctx_member, "purchase-requests", mine.id)
+    assert entity_type == "purchase_request" and obj is mine and rows == []
+
+    with pytest.raises(NotFound):  # someone else's request
+        attachments_service.list_for(ctx_member, "purchase-requests", theirs.id)
+    with pytest.raises(NotFound):  # the requester holds no inventory.read
+        attachments_service.list_for(ctx_requester, "parts", part.id)
+
+
+def test_attachments_over_http_on_parts_and_purchase_requests(client, org, users, requester, api_login, store):
+    """Uploading uses the one attach key for every entity type, so the route gate
+    and the service gate agree; read access to the parent is the other half and
+    keeps an unreadable part or request at 404."""
+    from asme.ops.models import Part, PurchaseRequest
+
+    part = Part(organization_id=org.id, name="Hex Bolt M8")
+    mine = PurchaseRequest(organization_id=org.id, number=_next_number(), title="Bolts", requester_user_id=users["member"].id)
+    _db.session.add_all([part, mine])
+    _db.session.commit()
+
+    api_login(users["admin"])
+    on_part = _upload(client, f"/api/v1/parts/{part.id}/attachments", make_png(), "datasheet.png", "image/png")
+    assert on_part.status_code == 201, on_part.get_json()
+    assert on_part.get_json()["payload"]["attachment"]["entity_type"] == "part"
+
+    api_login(users["member"])
+    assert client.get(f"/api/v1/parts/{part.id}/attachments").get_json()["payload"]["total"] == 1
+
+    on_request = _upload(client, f"/api/v1/purchase-requests/{mine.id}/attachments", make_png(), "quote.png", "image/png")
+    assert on_request.status_code == 201, on_request.get_json()
+    assert on_request.get_json()["payload"]["attachment"]["entity_type"] == "purchase_request"
+
+    api_login(requester)
+    assert client.get(f"/api/v1/parts/{part.id}/attachments").status_code == 404
+    assert client.get(f"/api/v1/purchase-requests/{mine.id}/attachments").status_code == 404
+
+
 def test_anonymous_requests_are_rejected(client, org, users):
     wo = _work_order(org, users["lead"])
     assert client.get(f"/api/v1/work-orders/{wo.id}/attachments").status_code == 401

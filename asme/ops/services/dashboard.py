@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func, or_, select
 
@@ -21,6 +21,7 @@ from asme.ops.models import CostEntry, OpsProject, Team, TimeEntry, WorkOrder
 from asme.ops.models.work import OPEN_STATUSES, PRIORITIES, WORK_ORDER_STATUSES, WORK_TYPES
 from asme.ops.serializers import team_ref, user_ref
 from asme.ops.types import as_utc, utcnow
+from asme.ops.types import org_timezone as types_org_timezone
 from asme.ops.validation import Field, ValidationErrors, validate
 
 log = logging.getLogger("asme.ops.dashboard")
@@ -48,12 +49,8 @@ SPEC = {
 
 
 def org_timezone(org) -> ZoneInfo:
-    name = (getattr(org, "timezone", None) or "").strip() or "UTC"
-    try:
-        return ZoneInfo(name)
-    except (ZoneInfoNotFoundError, ValueError):
-        log.warning("organization %s has unknown timezone %r; reporting in UTC", getattr(org, "slug", "?"), name)
-        return ZoneInfo("UTC")
+    """Re-exported from asme.ops.types so reports and due dates agree."""
+    return types_org_timezone(org)
 
 
 def semester_start(today: date, academic_year_start_month: int = 8) -> date:

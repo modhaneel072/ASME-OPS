@@ -1,4 +1,5 @@
-"""Private attachments on work orders, projects and assets (``ops_attachments``).
+"""Private attachments on work orders, projects, assets, parts and purchase
+requests (``ops_attachments``).
 
 Uploads are validated three ways before anything is written: the extension
 must be on the allow-list, the declared content type must match the
@@ -27,6 +28,10 @@ from asme.ops.validation import ValidationErrors
 from asme.services.errors import Forbidden, NotFound
 
 ATTACHMENT_FIELDS = ("id", "entity_type", "entity_id", "original_name", "content_type", "size_bytes", "checksum_sha256", "is_image", "uploaded_by_user_id")
+# One key covers every entity type, so the route gate and the service gate are
+# the same check: a caller the route lets through is never refused here for a
+# different reason. Read access to the parent is the other half and is decided
+# per entity type by ``entities.resolve``.
 UPLOAD_KEY = "work_order.attach"
 MAX_NAME_LENGTH = 260
 # Multipart framing (boundaries, part headers, other form fields) that may

@@ -2,6 +2,18 @@
 ``asme.models``) so ``db.create_all`` and Alembic see every table."""
 
 from asme.ops.models.identity import Membership, Organization, Permission, Role, RolePermission, Sequence, UserPreference
+from asme.ops.models.inventory import (
+    InventoryBalance,
+    InventoryTransaction,
+    Part,
+    PartAsset,
+    PartType,
+    PartVendor,
+    PurchaseRequest,
+    PurchaseRequestEvent,
+    PurchaseRequestItem,
+    WorkOrderPart,
+)
 from asme.ops.models.projects import Milestone, OpsProject, ProjectMember
 from asme.ops.models.shared import Attachment, AuditEvent, Comment, Notification, SavedFilter
 from asme.ops.models.structure import Asset, AssetStatusHistory, AssetType, AssetTypeLink, Category, Location, Team, TeamMember, Vendor
@@ -27,14 +39,23 @@ __all__ = [
     "Category",
     "Comment",
     "CostEntry",
+    "InventoryBalance",
+    "InventoryTransaction",
     "Location",
     "Membership",
     "Milestone",
     "Notification",
-    "Organization",
-    "Permission",
     "OpsProject",
+    "Organization",
+    "Part",
+    "PartAsset",
+    "PartType",
+    "PartVendor",
+    "Permission",
     "ProjectMember",
+    "PurchaseRequest",
+    "PurchaseRequestEvent",
+    "PurchaseRequestItem",
     "Role",
     "RolePermission",
     "SavedFilter",
@@ -49,6 +70,7 @@ __all__ = [
     "WorkOrderAssignee",
     "WorkOrderCategory",
     "WorkOrderDependency",
+    "WorkOrderPart",
     "WorkOrderStatusHistory",
     "WorkOrderWatcher",
 ]

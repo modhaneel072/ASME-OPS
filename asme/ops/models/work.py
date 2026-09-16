@@ -214,6 +214,8 @@ class CostEntry(OpsBase, db.Model):
     amount = db.Column(db.Numeric(12, 2), nullable=False)
     vendor_id = uuid_fk("ops_vendors.id")
     description = db.Column(db.String(400), nullable=True)
+    # Set on system-created parts costs; such entries cannot be deleted by hand.
+    inventory_transaction_id = uuid_fk("ops_inventory_transactions.id")
 
     work_order = db.relationship("WorkOrder", back_populates="cost_entries")
     vendor = db.relationship("Vendor", foreign_keys=[vendor_id])

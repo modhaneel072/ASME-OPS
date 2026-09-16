@@ -61,3 +61,20 @@ def test_seed_defaults_bootstraps_ops(app, db):
     org = bootstrap.default_organization()
     assert org is not None
     assert Membership.query.filter_by(organization_id=org.id).count() >= 1
+
+
+def test_sync_role_grants_adds_stage4_grants_without_removing_existing(org, db):
+    manager = bootstrap.role_by_key(org, "inventory_manager")
+    review = Permission.query.filter_by(key="purchase.review").one()
+    manager.grants.append(RolePermission(permission_id=review.id, scope_type="chapter"))
+    member = bootstrap.role_by_key(org, "full_member")
+    for grant in [g for g in member.grants if g.permission.key in ("inventory.read", "purchase.submit")]:
+        member.grants.remove(grant)
+    db.session.commit()
+
+    assert bootstrap.sync_role_grants(org) == 2
+    db.session.commit()
+    assert {"inventory.read", "purchase.submit"} <= {g.permission.key for g in bootstrap.role_by_key(org, "full_member").grants}
+    assert "purchase.review" in {g.permission.key for g in bootstrap.role_by_key(org, "inventory_manager").grants}
+    advisor_keys = {g.permission.key for g in bootstrap.role_by_key(org, "faculty_advisor").grants}
+    assert {"inventory.read", "vendor.read", "purchase.advisor_review"} <= advisor_keys

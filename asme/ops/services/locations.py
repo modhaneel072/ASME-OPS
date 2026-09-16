@@ -3,8 +3,9 @@
 Locations form a tree per organization. Exactly one location per organization is
 the default (bootstrap creates ``General``); it can be swapped with
 ``make_default`` but never deleted or deactivated while it is the default.
-Deleting is a hard delete and is refused while assets, work orders or child
-locations still point at the row.
+Deleting is a hard delete and is refused while anything still points at the row:
+assets, work orders, child locations, inventory balances, ledger rows, work-order
+part lines, parts that default to it or purchase-request receive lines.
 """
 
 from __future__ import annotations
@@ -17,7 +18,17 @@ from sqlalchemy import func, or_, select
 
 from asme.extensions import db
 from asme.ops import policy
-from asme.ops.models import Asset, Location, WorkOrder
+from asme.ops.models import (
+    Asset,
+    InventoryBalance,
+    InventoryTransaction,
+    Location,
+    Part,
+    PurchaseRequest,
+    PurchaseRequestItem,
+    WorkOrder,
+    WorkOrderPart,
+)
 from asme.ops.models.work import OPEN_STATUSES
 from asme.ops.services import audit_events
 from asme.ops.validation import Field, ValidationErrors, validate
@@ -193,15 +204,35 @@ def enrich(ctx, rows) -> dict[UUID, dict]:
 
 
 def usage_of(ctx, location: Location) -> dict[str, int]:
-    """How many assets, work orders (any status) and child locations reference ``location``."""
+    """Everything that still points at ``location``: assets, work orders (any
+    status), child locations and the Stage 4 inventory rows.
+
+    A balance or a ledger row whose location is deleted is orphaned - the stock
+    still counts chapter-wide but no screen can reach it, and the ledger is
+    append-only so the row can never be corrected. PostgreSQL enforces those
+    foreign keys, so counting them here turns a 500 into a 409."""
 
     def count(model, column):
         return int(db.session.scalar(select(func.count(model.id)).where(model.organization_id == ctx.org.id, column == location.id)) or 0)
 
+    # ``ops_purchase_request_items`` carries no organization_id of its own.
+    receive_lines = int(
+        db.session.scalar(
+            select(func.count(PurchaseRequestItem.id))
+            .join(PurchaseRequest, PurchaseRequest.id == PurchaseRequestItem.purchase_request_id)
+            .where(PurchaseRequest.organization_id == ctx.org.id, PurchaseRequestItem.receive_location_id == location.id)
+        )
+        or 0
+    )
     return {
         "assets": count(Asset, Asset.location_id),
         "work_orders": count(WorkOrder, WorkOrder.location_id),
         "children": count(Location, Location.parent_location_id),
+        "inventory_balances": count(InventoryBalance, InventoryBalance.location_id),
+        "inventory_transactions": count(InventoryTransaction, InventoryTransaction.location_id),
+        "work_order_parts": count(WorkOrderPart, WorkOrderPart.location_id),
+        "parts": count(Part, Part.default_location_id),
+        "purchase_request_items": receive_lines,
     }
 
 
@@ -299,7 +330,11 @@ def delete(ctx, location: Location) -> None:
         raise Conflict("The default location cannot be deleted. Make another location the default first.", code="default_location_protected")
     usage = usage_of(ctx, location)
     if any(usage.values()):
-        raise Conflict("This location is still used by assets, work orders or child locations.", code="location_in_use", usage=usage)
+        raise Conflict(
+            "This location is still used by assets, work orders, inventory or child locations.",
+            code="location_in_use",
+            usage=usage,
+        )
     audit_events.record(
         ctx,
         "location.deleted",

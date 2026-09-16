@@ -47,6 +47,16 @@ def test_unknown_kind_fails(app, db):
 def test_ensure_recurring_is_once_per_window(app, db):
     assert outbox.ensure_recurring("stock.reconcile", timedelta(hours=24)) is True
     assert outbox.ensure_recurring("stock.reconcile", timedelta(hours=24)) is False
+    # The window is written onto the job as an idempotency key, which is what
+    # stops a second web worker enqueueing the same run (tests/test_outbox_multiworker.py).
+    job = OutboxJob.query.filter_by(kind="stock.reconcile").one()
+    assert job.idempotency_key == outbox.recurring_key("stock.reconcile", timedelta(hours=24))
+
+
+def test_schedule_recurring_covers_every_scheduled_kind(app, db):
+    assert outbox.schedule_recurring() == len(outbox.RECURRING_JOBS)
+    assert outbox.schedule_recurring() == 0
+    assert sorted(job.kind for job in OutboxJob.query.all()) == sorted(kind for kind, _ in outbox.RECURRING_JOBS)
 
 
 def test_calendar_job_records_sync(app, db, users, monkeypatch):

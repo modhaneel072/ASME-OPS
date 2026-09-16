@@ -1,7 +1,12 @@
-"""Comments on work orders, projects and assets (``ops_comments``).
+"""Comments on work orders, projects, assets, parts and purchase requests
+(``ops_comments``).
 
-* Anyone who can read the parent may comment on projects and assets; work
-  orders additionally require ``work_order.comment``.
+* Anyone who can read the parent may comment on projects, assets, parts and
+  purchase requests; work orders additionally require ``work_order.comment``.
+  A purchase request has no single read key - the read rule itself (approvers
+  and inventory managers see everything, everyone else their own requests plus
+  the ones on projects they manage) is applied by ``entities.resolve`` and is
+  stricter than any key would be, so ``COMMENT_KEYS`` maps it to ``None``.
 * Mentions are written as ``@[Display Name](user:123)``; every mentioned active
   member is notified (``work_order.mentioned``). On work orders the assignees,
   watchers and creator are told about the new comment (``work_order.commented``).
@@ -30,7 +35,14 @@ from asme.services.errors import Conflict, Forbidden, NotFound
 MAX_BODY_LENGTH = 8000
 MENTION_RE = re.compile(r"@\[[^\]\n]{1,160}\]\(user:(\d{1,10})\)")
 COMMENT_FIELDS = ("id", "entity_type", "entity_id", "author_user_id", "body", "parent_comment_id", "edited_at", "deleted_at")
-COMMENT_KEYS = {"work_order": "work_order.comment", "project": "project.read", "asset": "asset.read"}
+COMMENT_KEYS = {
+    "work_order": "work_order.comment",
+    "project": "project.read",
+    "asset": "asset.read",
+    "part": "inventory.read",
+    # Readability is the rule; see the module docstring.
+    "purchase_request": None,
+}
 NOTIFY_BODY_LENGTH = 500
 
 CREATE_SPEC = {
@@ -158,7 +170,9 @@ def _notify(ctx, entity_type: str, obj, comment: Comment) -> None:
 
 def create(ctx, entity_segment: str, entity_id, payload: dict) -> Comment:
     entity_type, obj = entities.resolve(ctx, entity_segment, entity_id)
-    policy.authorize(ctx, COMMENT_KEYS[entity_type], obj)
+    key = COMMENT_KEYS[entity_type]
+    if key is not None:
+        policy.authorize(ctx, key, obj)
     data = validate(payload, CREATE_SPEC)
     parent_id = data.get("parent_comment_id")
     if parent_id is not None:

@@ -19,7 +19,7 @@ from asme.extensions import db
 from asme.ops.models import Milestone, Organization, WorkOrder
 from asme.ops.serializers import iso
 from asme.ops.services import audit_events, notifications
-from asme.ops.types import as_utc, utcnow
+from asme.ops.types import as_utc, org_today, utcnow
 
 log = logging.getLogger("asme.ops.scans")
 
@@ -128,7 +128,9 @@ def _notify_due_soon(ctx: SystemContext, now: datetime) -> int:
 
 
 def _mark_missed_milestones(ctx: SystemContext, now: datetime) -> int:
-    today = now.date()
+    # The chapter's calendar day, not UTC's: a milestone due today is not missed
+    # while the team still has the evening to finish it.
+    today = org_today(ctx.org, now)
     rows = (
         Milestone.query.filter(
             Milestone.organization_id == ctx.org_id,

@@ -1,0 +1,279 @@
+/* Purchase requests: list rows, detail panel, line-item editor. */
+
+.listToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+}
+
+.listCount {
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+  white-space: nowrap;
+}
+
+.padded {
+  padding: var(--space-4);
+}
+
+.detailPad {
+  padding: var(--space-6);
+}
+
+.number {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.rowTitle {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.rowTitleText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowTrailing {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+.money {
+  font-variant-numeric: tabular-nums;
+}
+
+.overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-danger-text);
+  font-weight: var(--text-label-weight);
+}
+
+.titleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Totals strip in the detail header ------------------------------------------- */
+
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.total {
+  display: grid;
+  gap: 2px;
+}
+
+.totalLabel {
+  font-size: var(--text-group-label);
+  font-weight: var(--text-label-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.totalValue {
+  font-size: var(--text-card);
+  font-weight: var(--text-card-weight);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Action bar ------------------------------------------------------------------- */
+
+.actionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Line-item tables ------------------------------------------------------------- */
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-table);
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.table th {
+  font-size: var(--text-group-label);
+  font-weight: var(--text-label-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.table td.wrap {
+  white-space: normal;
+  min-width: 180px;
+}
+
+.table .numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.table tfoot td {
+  font-weight: var(--text-label-weight);
+  border-bottom: 0;
+}
+
+.lineDescription {
+  display: grid;
+  gap: 2px;
+}
+
+.lineMeta {
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+}
+
+/* Timeline --------------------------------------------------------------------- */
+
+.timelineComment {
+  margin: var(--space-1) 0 0;
+  white-space: pre-wrap;
+  color: var(--color-text-secondary);
+}
+
+/* Forms ------------------------------------------------------------------------ */
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.lineEditor {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.lineCard {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+}
+
+.lineHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.lineTitle {
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-secondary);
+}
+
+.lineNumbers {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.lineTotal {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--text-label-weight);
+  padding-bottom: var(--space-2);
+  white-space: nowrap;
+}
+
+.summary {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryRow_total {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-2);
+  font-weight: var(--text-label-weight);
+  font-size: var(--text-card);
+}
+
+.receiveRow {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.receiveRow:last-of-type {
+  border-bottom: 0;
+}
+
+.receiveHead {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: baseline;
+}
+
+.receiveFields {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(160px, 2fr);
+  gap: var(--space-3);
+}
+
+@media (max-width: 720px) {
+  .lineNumbers,
+  .receiveFields {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,347 @@
+/* Parts Inventory screen. Every value comes from src/ui/tokens.css. */
+
+.padded {
+  padding: var(--space-4);
+}
+
+.detailPad {
+  padding: var(--space-6);
+}
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.inlineActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.muted {
+  color: var(--color-text-muted);
+  font-size: var(--text-body);
+}
+
+.code {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.titleRow,
+.eyebrowRow {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* Quantities ------------------------------------------------------------------ */
+
+.quantity {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.quantityValue {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-primary);
+}
+
+.quantityUnit {
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.deltaUp {
+  color: var(--color-success-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.deltaDown {
+  color: var(--color-danger-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.deltaZero {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* List table ------------------------------------------------------------------- */
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-table);
+}
+
+.table th,
+.table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--color-border);
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--color-bg-surface);
+  font-size: var(--text-group-label);
+  font-weight: var(--text-label-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.table tbody tr:hover {
+  background: var(--color-bg-hover);
+}
+
+.table tbody tr[aria-selected='true'] {
+  background: var(--color-bg-selected);
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.table tbody tr:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--color-border-focus);
+}
+
+.numeric {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.selectCell {
+  width: 36px;
+  padding-right: 0;
+}
+
+.sortButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+}
+
+.sortButton:hover {
+  color: var(--color-text-primary);
+}
+
+.nameCell {
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+  white-space: normal;
+}
+
+.nameText {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-primary);
+}
+
+.availableCell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.cellMuted {
+  color: var(--color-text-muted);
+}
+
+.listToolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-width: 0;
+}
+
+/* Selection bar ---------------------------------------------------------------- */
+
+.selectionBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-primary-soft);
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+}
+
+/* Detail ----------------------------------------------------------------------- */
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--space-3);
+}
+
+.total {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+}
+
+.totalLabel {
+  font-size: var(--text-group-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.totalValue {
+  font-size: var(--text-card);
+  font-weight: var(--text-card-weight);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.actionBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.linkRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  min-height: var(--row-height);
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.linkRow:last-child {
+  border-bottom: 0;
+}
+
+.linkName {
+  font-weight: var(--text-label-weight);
+  color: var(--color-text-primary);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.historyNote {
+  white-space: normal;
+  color: var(--color-text-secondary);
+}
+
+/* Part type colour picker -------------------------------------------------------- */
+
+.colorRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.colorInput {
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  cursor: pointer;
+}
+
+.colorInput:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: var(--border-width) solid var(--color-border);
+}
+
+.swatch[aria-pressed='true'],
+.swatch:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+/* Vendor editor ---------------------------------------------------------------- */
+
+.vendorRow {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-subtle);
+}
+
+.vendorRowHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.vendorRowTitle {
+  flex: 1;
+  min-width: 0;
+  font-weight: var(--text-label-weight);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vendorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-3);
+}
+
+/* Responsive (spec section 35): below the split breakpoint the table drops the
+   columns that only support scanning a wide list. */
+
+@media (max-width: 900px) {
+  .hideNarrow {
+    display: none;
+  }
+}

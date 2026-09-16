@@ -1,8 +1,9 @@
-"""Comments on work orders, projects and assets.
+"""Comments on work orders, projects, assets, parts and purchase requests.
 
 ``GET|POST /<entity>/:id/comments`` and ``PATCH|DELETE /comments/:id`` where
-``entity`` is ``work-orders`` | ``projects`` | ``assets``. Read access to the
-parent entity is checked by the service (unreadable parents are 404).
+``entity`` is ``work-orders`` | ``projects`` | ``assets`` | ``parts`` |
+``purchase-requests``. Read access to the parent entity is checked by the
+service (unreadable parents are 404).
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from asme.ops import policy
 from asme.ops.serializers.comments import comment as serialize_comment
 from asme.ops.services import comments
 
-ENTITY_RULE = "/<any('work-orders','projects','assets'):segment>/<entity_id>/comments"
+ENTITY_RULE = "/<any('work-orders','projects','assets','parts','purchase-requests'):segment>/<entity_id>/comments"
 
 
 def _serialize_many(ctx, rows) -> list[dict]:

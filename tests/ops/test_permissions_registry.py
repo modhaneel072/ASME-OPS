@@ -47,3 +47,22 @@ def test_read_key_detection():
     assert reg.is_read_key("work_order.read_all")
     assert reg.is_read_key("report.view")
     assert not reg.is_read_key("work_order.edit")
+
+
+def test_stage4_inventory_and_purchasing_grants():
+    grants = reg.DEFAULT_GRANTS
+    assert reg.PERMISSIONS["purchase.advisor_review"] == "Give faculty-advisor sign-off on purchase requests"
+    for role in ("full_member", "project_lead", "team_lead", "inventory_manager", "safety_officer", "treasurer"):
+        assert grants[role]["inventory.read"] == "chapter", role
+        assert grants[role]["purchase.submit"] == "chapter", role
+    assert grants["shop_operator"]["inventory.read"] == "chapter"
+    assert "purchase.submit" not in grants["shop_operator"]
+    advisor = grants["faculty_advisor"]
+    assert {advisor[k] for k in ("inventory.read", "vendor.read", "purchase.advisor_review")} == {"chapter"}
+    manager = grants["inventory_manager"]
+    assert manager["inventory.manage"] == "chapter" and "purchase.review" not in manager
+    assert grants["treasurer"]["purchase.review"] == "chapter" and "inventory.manage" not in grants["treasurer"]
+    assert "purchase.advisor_review" not in grants["treasurer"]
+    assert grants["executive_officer"]["purchase.advisor_review"] == "chapter"
+    assert not {"inventory.read", "purchase.submit"} & set(grants["requester"])
+    assert grants["sponsor_guest"] == {"report.view": "chapter"}

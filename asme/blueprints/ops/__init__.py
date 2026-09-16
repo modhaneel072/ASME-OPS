@@ -44,6 +44,9 @@ ROUTE_MODULES = (
     "asme.blueprints.ops.changes",
     "asme.blueprints.ops.reports",
     "asme.blueprints.ops.search",
+    "asme.blueprints.ops.parts",
+    "asme.blueprints.ops.purchase_requests",
+    "asme.blueprints.ops.work_order_parts",
 )
 
 MUTATING_METHODS = {"POST", "PATCH", "PUT", "DELETE"}

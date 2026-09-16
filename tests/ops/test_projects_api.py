@@ -550,7 +550,7 @@ def test_health_and_activity(client, org, users, api_login):
     assert body["work"] == {"total": 6, "open": 1, "in_progress": 1, "on_hold": 1, "done": 1, "canceled": 1, "overdue": 1, "blocked": 2}
     assert body["milestones"]["total"] == 6 and body["milestones"]["done"] == 1 and body["milestones"]["missed"] == 1
     assert [m["name"] for m in body["milestones"]["upcoming"]] == ["In 5 days", "In 10 days", "In 15 days"]
-    assert body["budget"] == {"amount": 1000.0, "used": 350.25, "remaining": 649.75}
+    assert body["budget"] == {"amount": 1000.0, "used": 350.25, "committed": 0.0, "remaining": 649.75}
     assert body["members"] == 2
     assert body["teams"] == [{"id": str(team.id), "name": "Wheels"}]
     # project.created + 6 milestone.created + the recent work-order event; not the old or unrelated ones
@@ -573,7 +573,7 @@ def test_health_and_activity(client, org, users, api_login):
 
     no_budget = _create(client, name="No Budget")
     body = client.get(f"{API}/{no_budget['id']}/health").get_json()["payload"]
-    assert body["budget"] == {"amount": None, "used": 0.0, "remaining": None}
+    assert body["budget"] == {"amount": None, "used": 0.0, "committed": 0.0, "remaining": None}
     assert body["completion_percent"] == 0 and body["milestones"]["upcoming"] == [] and body["teams"] == []
 
     api_login(users["member"])

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import uuid
 
+import pytest
+
 from asme.extensions import db as _db
 from asme.ops import policy
 from asme.ops.models import (
@@ -342,6 +344,74 @@ def test_cross_organization_ids_are_not_found(client, org, users, api_login, ctx
     assert client.patch(f"/api/v1/comments/{foreign_comment.id}", json={"body": "x"}).status_code == 404
     assert client.delete(f"/api/v1/comments/{foreign_comment.id}").status_code == 404
     assert Comment.query.filter_by(organization_id=org.id).count() == 0
+
+
+def test_comments_resolve_on_parts_and_purchase_requests(org, users, requester, ctx_member, ctx_requester):
+    """The ``parts`` and ``purchase-requests`` segments resolve through
+    ``entities`` with their own read rules."""
+    from asme.ops.models import Part, PurchaseRequest
+    from asme.ops.services import entities
+    from asme.services.errors import NotFound
+
+    part = Part(organization_id=org.id, name="Hex Bolt")
+    mine = PurchaseRequest(organization_id=org.id, number=_next_number(), title="Bolts", requester_user_id=users["member"].id)
+    theirs = PurchaseRequest(organization_id=org.id, number=_next_number(), title="Paint", requester_user_id=users["lead"].id)
+    _db.session.add_all([part, mine, theirs])
+    _db.session.commit()
+
+    assert entities.resolve(ctx_member, "parts", str(part.id)) == ("part", part)
+    assert entities.resolve(ctx_member, "purchase-requests", str(mine.id)) == ("purchase_request", mine)
+    assert entities.label("purchase_request", mine) == f"PR-{mine.number} Bolts"
+    assert entities.label("part", part) == "Hex Bolt"
+
+    entity_type, obj, rows = comments_service.list_for(ctx_member, "parts", part.id)
+    assert entity_type == "part" and obj is part and rows == []
+    entity_type, obj, rows = comments_service.list_for(ctx_member, "purchase-requests", mine.id)
+    assert entity_type == "purchase_request" and obj is mine and rows == []
+
+    with pytest.raises(NotFound):  # someone else's request does not exist for them
+        comments_service.list_for(ctx_member, "purchase-requests", theirs.id)
+    for segment, entity_id in (("parts", part.id), ("purchase-requests", mine.id)):
+        with pytest.raises(NotFound):  # the requester holds neither inventory.read nor the request
+            comments_service.list_for(ctx_requester, segment, entity_id)
+
+    foreign = _other_org()
+    foreign_part = Part(organization_id=foreign.id, name="Foreign Bolt")
+    _db.session.add(foreign_part)
+    _db.session.commit()
+    with pytest.raises(NotFound):
+        comments_service.list_for(ctx_member, "parts", foreign_part.id)
+    with pytest.raises(NotFound):
+        comments_service.list_for(ctx_member, "parts", "not-a-uuid")
+
+
+def test_comments_over_http_on_parts_and_purchase_requests(client, org, users, requester, api_login):
+    """The HTTP prefix accepts the two Stage 4 segments, so the plan's "comments
+    and attachments work on both" holds over the wire and not only in the
+    service. A purchase request nobody else may read stays 404."""
+    from asme.ops.models import Part, PurchaseRequest
+
+    part = Part(organization_id=org.id, name="Hex Bolt M8")
+    mine = PurchaseRequest(organization_id=org.id, number=_next_number(), title="Bolts", requester_user_id=users["member"].id)
+    _db.session.add_all([part, mine])
+    _db.session.commit()
+
+    api_login(users["member"])
+    on_part = client.post(f"/api/v1/parts/{part.id}/comments", json={"body": "Reordered from McMaster."})
+    assert on_part.status_code == 201, on_part.get_json()
+    assert on_part.get_json()["payload"]["comment"]["entity_type"] == "part"
+    on_request = client.post(f"/api/v1/purchase-requests/{mine.id}/comments", json={"body": "Quote attached."})
+    assert on_request.status_code == 201, on_request.get_json()
+    assert on_request.get_json()["payload"]["comment"]["entity_type"] == "purchase_request"
+
+    assert client.get(f"/api/v1/parts/{part.id}/comments").get_json()["payload"]["total"] == 1
+    assert client.get(f"/api/v1/purchase-requests/{mine.id}/comments").get_json()["payload"]["total"] == 1
+
+    # The requester role holds neither inventory.read nor this request.
+    api_login(requester)
+    assert client.get(f"/api/v1/parts/{part.id}/comments").status_code == 404
+    assert client.get(f"/api/v1/purchase-requests/{mine.id}/comments").status_code == 404
+    assert client.post(f"/api/v1/purchase-requests/{mine.id}/comments", json={"body": "nope"}).status_code == 404
 
 
 def test_unknown_segment_and_malformed_ids(client, org, users, api_login):

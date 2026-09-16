@@ -274,7 +274,8 @@ def test_complete_reports_every_nested_error(client, org, users, api_login):
 def test_complete_without_extras_and_service_return_shape(ctx_admin, org):
     wo = _create(ctx_admin, title="Plain")
     result = work_orders.complete(ctx_admin, wo)
-    assert result == {"work_order": wo, "follow_up": None}
+    # parts_outstanding: completing never releases reservations, it reports them
+    assert result == {"work_order": wo, "follow_up": None, "parts_outstanding": 0}
     assert wo.status == "done" and wo.completed_at is not None and wo.actual_minutes == 0
     assert wo.completion_note is None
 

@@ -58,7 +58,7 @@ PERMISSIONS: dict[str, str] = {
     "work_order.cancel": "Cancel work orders",
     "work_order.comment": "Comment on work orders",
     "work_order.log_time": "Record time and cost entries",
-    "work_order.attach": "Upload files to work orders and projects",
+    "work_order.attach": "Upload files to work orders, projects, assets, parts and purchase requests",
     # ui / reporting
     "saved_filter.share": "Share saved filters with a team or the chapter",
     "report.view": "View reports and dashboards",
@@ -72,6 +72,7 @@ PERMISSIONS: dict[str, str] = {
     "inventory.manage": "Receive, issue, transfer and count parts",
     "purchase.submit": "Submit purchase requests",
     "purchase.review": "Approve purchase requests",
+    "purchase.advisor_review": "Give faculty-advisor sign-off on purchase requests",
     "procedure.read": "View procedures",
     "procedure.manage": "Author procedure drafts",
     "procedure.publish": "Publish procedure versions",
@@ -137,6 +138,8 @@ _FULL_MEMBER_CHAPTER = (
     "report.view",
     "request.submit",
     "notification.read",
+    "inventory.read",
+    "purchase.submit",
 )
 _FULL_MEMBER = _grants(
     chapter=_FULL_MEMBER_CHAPTER,
@@ -170,6 +173,8 @@ DEFAULT_GRANTS: dict[str, dict[str, str]] = {
             "vendor.read",
             "report.view",
             "notification.read",
+            "inventory.read",
+            "purchase.submit",
         ),
         project=(
             "project.read_private",
@@ -200,6 +205,8 @@ DEFAULT_GRANTS: dict[str, dict[str, str]] = {
             "vendor.read",
             "report.view",
             "notification.read",
+            "inventory.read",
+            "purchase.submit",
         ),
         team=(
             "team.manage",
@@ -221,6 +228,7 @@ DEFAULT_GRANTS: dict[str, dict[str, str]] = {
             "location.read",
             "request.submit",
             "notification.read",
+            "inventory.read",
         ),
         assigned=("work_order.start", "work_order.complete", "work_order.log_time"),
     ),
@@ -231,7 +239,6 @@ DEFAULT_GRANTS: dict[str, dict[str, str]] = {
             "inventory.read",
             "inventory.manage",
             "purchase.submit",
-            "purchase.review",
             "asset.manage",
             "vendor.manage",
             "work_order.edit",
@@ -267,6 +274,9 @@ DEFAULT_GRANTS: dict[str, dict[str, str]] = {
             "audit.read",
             "purchase.review",
             "notification.read",
+            "inventory.read",
+            "vendor.read",
+            "purchase.advisor_review",
         )
     ),
     "sponsor_guest": _grants(chapter=("report.view",)),

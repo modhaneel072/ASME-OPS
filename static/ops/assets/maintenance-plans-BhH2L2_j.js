@@ -1,1 +1,0 @@
-import{yn as e}from"./ui-Bq9jYrur.js";import{t}from"./index-B6RhHbAC.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Maintenance Plans`,description:`Recurring plans that generate work orders exactly once.`})}export{r as default};

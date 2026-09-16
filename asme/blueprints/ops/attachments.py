@@ -19,7 +19,7 @@ from asme.ops.services import attachments
 
 log = logging.getLogger("asme.ops.attachments")
 
-ENTITY_RULE = "/<any('work-orders','projects','assets'):segment>/<entity_id>/attachments"
+ENTITY_RULE = "/<any('work-orders','projects','assets','parts','purchase-requests'):segment>/<entity_id>/attachments"
 
 
 @bp.get(ENTITY_RULE)

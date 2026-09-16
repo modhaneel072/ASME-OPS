@@ -9,6 +9,8 @@ ENTITY_ROUTES = {
     "work_order": "/app/work-orders/{id}",
     "project": "/app/projects/{id}",
     "asset": "/app/assets/{id}",
+    "part": "/app/parts/{id}",
+    "purchase_request": "/app/purchase-requests/{id}",
 }
 
 

@@ -116,6 +116,7 @@ def complete_work_order(work_order_id):
         {
             "work_order": serialize.work_order_detail(result["work_order"]),
             "follow_up": serialize.work_order(follow_up) if follow_up is not None else None,
+            "parts_outstanding": result["parts_outstanding"],
         }
     )
 

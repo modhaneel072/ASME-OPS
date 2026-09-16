@@ -1019,7 +1019,15 @@ def complete(
     _change_status(ctx, wo, "complete", note=(body.get("note") or "").strip() or None, pending=pending, audit_metadata=metadata)
     db.session.commit()
     _emit_all(pending)
-    return {"work_order": wo, "follow_up": follow_up_row}
+    # Completing never releases stock: the caller is told how many part lines
+    # still hold a reservation so it can offer "release all".
+    return {"work_order": wo, "follow_up": follow_up_row, "parts_outstanding": _parts_outstanding(wo)}
+
+
+def _parts_outstanding(wo: WorkOrder) -> int:
+    from asme.ops.services import work_order_parts
+
+    return work_order_parts.outstanding_count(wo)
 
 
 # --------------------------------------------------------------------------- assignment / watchers
@@ -1132,6 +1140,15 @@ def delete_cost_entry(ctx, wo: WorkOrder, entry_id) -> WorkOrder:
         raise NotFound("Cost entry not found.")
     if row.created_by_user_id != ctx.user.id:
         policy.authorize(ctx, "work_order.assign", wo)
+    if row.inventory_transaction_id is not None:
+        # System parts costs mirror the inventory ledger; return the parts
+        # instead, which writes the reversing entry.
+        raise Conflict(
+            "This cost comes from parts issued to this work order. Return the parts to reverse it.",
+            code="inventory_linked",
+            cost_entry_id=str(row.id),
+            inventory_transaction_id=str(row.inventory_transaction_id),
+        )
     snapshot = {"cost_entry_id": str(row.id), "type": row.type, "amount": row.amount, "description": row.description}
     wo.cost_entries.remove(row)
     db.session.flush()

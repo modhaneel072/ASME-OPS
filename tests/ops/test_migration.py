@@ -15,7 +15,7 @@ from sqlalchemy import inspect, text
 
 from tests.conftest import make_app
 
-HEAD = "0003_ops_foundation"
+HEAD = "0004_ops_inventory"
 PREVIOUS = "0002_launchpad"
 
 EXPECTED_OPS_TABLES = {

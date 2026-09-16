@@ -274,6 +274,54 @@ def test_feed_never_leaks_other_organizations(client, org, users, ctx_admin, api
     assert [e["id"] for e in payload["events"]] == [str(local_event.id)]
 
 
+def test_inventory_and_purchase_request_events_follow_their_read_rules(client, org, users, ctx_admin, api_login):
+    from asme.ops.models import Part, PartType, PurchaseRequest
+
+    part_type = PartType(organization_id=org.id, name="Fastener")
+    _db.session.add(part_type)
+    _db.session.flush()
+    part = Part(organization_id=org.id, name="Hex Bolt", part_type_id=part_type.id)
+    _db.session.add(part)
+    _db.session.flush()
+    project = _project(org, "Rover", "CCR")
+    mine = PurchaseRequest(organization_id=org.id, number=1, title="Bolts", requester_user_id=users["member"].id)
+    theirs = PurchaseRequest(organization_id=org.id, number=2, title="Paint", requester_user_id=users["lead"].id)
+    on_project = PurchaseRequest(
+        organization_id=org.id, number=3, title="Nuts", requester_user_id=users["lead"].id, project_id=project.id
+    )
+    _db.session.add_all([mine, theirs, on_project])
+    _db.session.flush()
+    rows = {
+        "part": _event(ctx_admin, "part.created", part),
+        "part_type": _event(ctx_admin, "part_type.created", part_type),
+        "pr:mine": _event(ctx_admin, "purchase_request.created", mine),
+        "pr:theirs": _event(ctx_admin, "purchase_request.created", theirs),
+        "pr:project": _event(ctx_admin, "purchase_request.created", on_project),
+        # the ledger is its own history: transactions are never audited
+        "transaction": _event(ctx_admin, "inventory_transaction.created", "inventory_transaction", entity_id=str(part.id)),
+    }
+    _db.session.commit()
+
+    def visible_for(user):
+        api_login(user)
+        ids = {event["id"] for event in _get(client, since=EPOCH).get_json()["payload"]["events"]}
+        return {label for label, row in rows.items() if str(row.id) in ids}
+
+    # full member: inventory.read, and only their own purchase requests
+    assert visible_for(users["member"]) == {"part", "part_type", "pr:mine"}
+    # requester: no inventory.read, no purchase requests of their own
+    requester = make_user("Rae Requester", "rae@uiowa.edu", ops_role="requester", org=org)
+    assert visible_for(requester) == set()
+    # treasurer: purchase.review reads every request, inventory.read the parts
+    treasurer = make_user("Tess Treasurer", "tess@uiowa.edu", ops_role="treasurer", org=org)
+    assert visible_for(treasurer) == set(rows) - {"transaction"}
+    # project lead: own plus the requests on projects they manage
+    lead = make_user("Pat Projectlead", "pat@uiowa.edu", ops_role="project_lead", org=org)
+    project.members.append(ProjectMember(user_id=lead.id))
+    _db.session.commit()
+    assert visible_for(lead) == {"part", "part_type", "pr:project"}
+
+
 def test_feed_requires_login_but_any_member_may_poll(client, org, users, api_login):
     anonymous = _get(client, since=EPOCH)
     assert anonymous.status_code == 401

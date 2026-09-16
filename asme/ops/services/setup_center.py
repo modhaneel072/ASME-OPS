@@ -1,9 +1,9 @@
 """Setup Center: derived onboarding progress for a chapter.
 
 Progress is never stored; every task is evaluated from live data so it stays
-correct when records are deleted. Tasks that belong to later stages are
-reported as ``unavailable`` with their ``stage`` number and are excluded from
-the percentage, as are optional tasks.
+correct when records are deleted. Tasks whose module is not built yet are
+reported as ``unavailable`` and excluded from the percentage, as are optional
+tasks.
 """
 
 from __future__ import annotations
@@ -15,12 +15,13 @@ from sqlalchemy import func, select
 
 from asme.extensions import db
 from asme.ops import policy
-from asme.ops.models import Asset, Category, Location, Membership, OpsProject, Team
+from asme.ops.models import Asset, Category, Location, Membership, OpsProject, Part, Team
 from asme.ops.serializers import iso
 from asme.ops.services import audit_events, preferences
 from asme.ops.types import utcnow
 
 MIN_ASSETS = 5
+MIN_PARTS = 5
 MIN_ACTIVE_MEMBERSHIPS = 3
 ORG_SNAPSHOT = ("settings_json", "setup_completed_at")
 GUIDE_READ_KEY = "officer_guide_read"
@@ -36,7 +37,7 @@ class TaskSpec:
     href: str
     check: Callable | None = None  # (ctx) -> (complete: bool, count: int | None)
     optional: bool = False
-    stage: int | None = None  # set when the task is unavailable in this stage
+    built: bool = True  # False while the module behind the task does not exist yet
 
 
 @dataclass(frozen=True)
@@ -91,6 +92,11 @@ def _first_project(ctx):
     return count >= 1, count
 
 
+def _parts(ctx):
+    count = _count(select(func.count(Part.id)).where(Part.organization_id == ctx.org.id, Part.is_active.is_(True)))
+    return count >= MIN_PARTS, count
+
+
 def _categories(ctx):
     count = _count(select(func.count(Category.id)).where(Category.organization_id == ctx.org.id, Category.is_active.is_(True)))
     return count >= 1, count
@@ -123,8 +129,15 @@ PHASES: tuple[PhaseSpec, ...] = (
         tasks=(
             TaskSpec("first_project", "Create your first project", "Projects group work orders, milestones, members and budget.", 5, "/app/projects", _first_project),
             TaskSpec("categories", "Review categories", "Keep at least one category so work orders can be labelled.", 5, "/app/categories", _categories),
-            TaskSpec("parts", "Stock your parts inventory", "Parts and inventory arrive in Stage 4.", 15, "/app/parts", stage=4),
-            TaskSpec("procedure", "Write a procedure", "Procedures and checklists arrive in Stage 5.", 20, "/app/procedures", stage=5),
+            TaskSpec(
+                "parts",
+                "Stock your parts inventory",
+                f"Add at least {MIN_PARTS} parts so work orders can reserve and issue stock.",
+                15,
+                "/app/parts",
+                _parts,
+            ),
+            TaskSpec("procedure", "Write a procedure", "Write down how a job is done, step by step.", 20, "/app/procedures", built=False),
         ),
     ),
     PhaseSpec(
@@ -132,10 +145,10 @@ PHASES: tuple[PhaseSpec, ...] = (
         title="Standardize Operations",
         description="Automate recurring work, open a request portal and build dashboards.",
         tasks=(
-            TaskSpec("maintenance_plan", "Create a maintenance plan", "Recurring maintenance plans arrive in Stage 5.", 15, "/app/maintenance-plans", stage=5),
-            TaskSpec("request_portal", "Open the request portal", "The request portal arrives in Stage 3.", 10, "/app/requests", stage=3),
-            TaskSpec("automation", "Add an automation", "Automations arrive in Stage 6.", 10, "/app/automations", stage=6),
-            TaskSpec("dashboard", "Build a dashboard", "Custom dashboards arrive in Stage 7.", 10, "/app/dashboards", stage=7),
+            TaskSpec("maintenance_plan", "Create a maintenance plan", "Schedule recurring upkeep so it creates its own work orders.", 15, "/app/maintenance-plans", built=False),
+            TaskSpec("request_portal", "Open the request portal", "Let members ask for work without creating work orders themselves.", 10, "/app/requests", built=False),
+            TaskSpec("automation", "Add an automation", "Let the system react on its own, such as flagging overdue work.", 10, "/app/automations", built=False),
+            TaskSpec("dashboard", "Build a dashboard", "Put the numbers your officers care about on one screen.", 10, "/app/dashboards", built=False),
         ),
     ),
 )
@@ -147,7 +160,7 @@ TASKS_BY_KEY = {task.key: task for phase in PHASES for task in phase.tasks}
 
 
 def _task_payload(ctx, task: TaskSpec) -> dict:
-    if task.stage is not None:
+    if not task.built:
         status, count = "unavailable", None
     else:
         complete, count = task.check(ctx)
@@ -158,7 +171,6 @@ def _task_payload(ctx, task: TaskSpec) -> dict:
         "description": task.description,
         "estimated_minutes": task.estimated_minutes,
         "status": status,
-        "stage": task.stage,
         "href": task.href,
         "count": count,
         "optional": task.optional,

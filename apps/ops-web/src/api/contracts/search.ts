@@ -15,10 +15,31 @@ export const WorkOrderHit = z.object({
 })
 export type WorkOrderHit = z.infer<typeof WorkOrderHit>
 
+/** Part hit: `part_ref` from `asme/ops/serializers/__init__.py`. */
+export const PartHit = z.object({
+  id: z.string(),
+  name: z.string(),
+  sku: z.string().nullable().optional(),
+  unit: z.string().optional(),
+})
+export type PartHit = z.infer<typeof PartHit>
+
+/** Purchase-request hit: `purchase_request_ref`. */
+export const PurchaseRequestHit = z.object({
+  id: z.string(),
+  number: z.number(),
+  display_number: z.string(),
+  title: z.string(),
+  status: z.string(),
+})
+export type PurchaseRequestHit = z.infer<typeof PurchaseRequestHit>
+
 export const SearchResults = z.object({
   work_orders: z.array(WorkOrderHit).default([]),
   projects: z.array(ProjectRef).default([]),
   assets: z.array(AssetRef).default([]),
+  parts: z.array(PartHit).default([]),
+  purchase_requests: z.array(PurchaseRequestHit).default([]),
   locations: z.array(LocationRef).default([]),
   categories: z.array(CategoryRef).default([]),
   users: z.array(UserRef).default([]),
@@ -38,6 +59,8 @@ export const SEARCH_GROUPS: Array<{ key: SearchGroupKey; label: string }> = [
   { key: 'work_orders', label: 'Work orders' },
   { key: 'projects', label: 'Projects' },
   { key: 'assets', label: 'Assets' },
+  { key: 'parts', label: 'Parts' },
+  { key: 'purchase_requests', label: 'Purchase requests' },
   { key: 'locations', label: 'Locations' },
   { key: 'categories', label: 'Categories' },
   { key: 'users', label: 'People' },
@@ -72,6 +95,10 @@ export function searchItemHref(group: SearchGroupKey, id: string | number): stri
       return `/projects/${id}`
     case 'assets':
       return `/assets/${id}`
+    case 'parts':
+      return `/parts/${id}`
+    case 'purchase_requests':
+      return `/purchase-requests/${id}`
     case 'locations':
       return `/locations/${id}`
     case 'categories':
@@ -117,6 +144,27 @@ export function groupSearchResults(results: SearchResults): SearchGroup[] {
           secondary: asset.code ?? undefined,
           status: asset.status,
           href: searchItemHref(key, asset.id),
+        }))
+        break
+      case 'parts':
+        items = results.parts.map((part) => ({
+          key: `parts:${part.id}`,
+          group: key,
+          id: part.id,
+          primary: part.name,
+          secondary: part.sku ?? undefined,
+          href: searchItemHref(key, part.id),
+        }))
+        break
+      case 'purchase_requests':
+        items = results.purchase_requests.map((request) => ({
+          key: `purchase_requests:${request.id}`,
+          group: key,
+          id: request.id,
+          primary: request.title,
+          secondary: request.display_number,
+          status: request.status,
+          href: searchItemHref(key, request.id),
         }))
         break
       case 'locations':

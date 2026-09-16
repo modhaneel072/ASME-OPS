@@ -18,13 +18,15 @@ const RESULTS = {
     ],
     projects: [{ id: 'p-1', name: 'Crater Cruncher Rover', code: 'CCR', visibility: 'chapter' }],
     assets: [{ id: 'a-1', name: 'Rover Chassis', code: 'CCR-CH', status: 'online' }],
+    parts: [{ id: 'part-1', name: 'Rover drive belt', sku: 'BELT-12', unit: 'each' }],
+    purchase_requests: [{ id: 'pr-1', number: 12, display_number: 'PR-12', title: 'Rover belts and bearings', status: 'treasurer_review' }],
     locations: [{ id: 'l-1', name: 'Rover Bay' }],
     categories: [{ id: 'c-1', name: 'Rover Systems', color: '#123456', icon: 'rocket' }],
     users: [{ id: 7, name: 'Rover Fan', email: 'fan@uiowa.edu', avatar_url: null }],
   },
 }
 
-const EMPTY = { query: 'zzz', results: { work_orders: [], projects: [], assets: [], locations: [], categories: [], users: [] } }
+const EMPTY = { query: 'zzz', results: { work_orders: [], projects: [], assets: [], parts: [], purchase_requests: [], locations: [], categories: [], users: [] } }
 
 function renderPalette(options: Parameters<typeof renderWithProviders>[1] = {}) {
   const onClose = vi.fn()
@@ -95,7 +97,7 @@ describe('CommandPalette', () => {
     expect(first).toHaveTextContent('#12')
     expect(first).toHaveTextContent('In progress')
     expect(within(results).getByRole('option', { name: /Crater Cruncher Rover/ })).toHaveTextContent('CCR')
-    expect(screen.getByText('7 results for rov.')).toBeInTheDocument()
+    expect(screen.getByText('9 results for rov.')).toBeInTheDocument()
 
     // Down twice crosses from the work-orders group into projects; Up wraps to the last row.
     await user.keyboard('{ArrowDown}{ArrowDown}')
@@ -107,6 +109,29 @@ describe('CommandPalette', () => {
     await user.keyboard('{ArrowDown}{Enter}')
     await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/work-orders/wo-12'))
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('groups parts and purchase requests and opens their own screens', async () => {
+    mockApi({ 'GET /search': RESULTS })
+    const { user } = renderPalette()
+    await user.type(screen.getByRole('combobox', { name: 'Search' }), 'rov')
+    const results = await screen.findByRole('listbox', { name: 'Search results' })
+    expect(within(results).getByText('Parts')).toBeInTheDocument()
+    expect(within(results).getByText('Purchase requests')).toBeInTheDocument()
+    const request = within(results).getByRole('option', { name: /Rover belts and bearings/ })
+    expect(request).toHaveTextContent('PR-12')
+    expect(request).toHaveTextContent('Treasurer review')
+    await user.click(within(results).getByRole('option', { name: /Rover drive belt/ }))
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/parts/part-1'))
+  })
+
+  it('opens a purchase request from the palette', async () => {
+    mockApi({ 'GET /search': RESULTS })
+    const { user } = renderPalette()
+    await user.type(screen.getByRole('combobox', { name: 'Search' }), 'rov')
+    const results = await screen.findByRole('listbox', { name: 'Search results' })
+    await user.click(within(results).getByRole('option', { name: /Rover belts and bearings/ }))
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/purchase-requests/pr-1'))
   })
 
   it('navigates to people, categories and locations with their own routes when clicked', async () => {

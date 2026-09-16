@@ -20,7 +20,7 @@ Scopes: **C** chapter-wide · **P** projects the user is a member of · **T** te
 | `asset.read`<br><small>View assets and their history</small> | C | C | C | C | C | C |  | C | C | C | C |  |
 | `asset.manage`<br><small>Create and edit assets</small> | C | C | P |  |  |  |  | C |  |  |  |  |
 | `asset.status.update`<br><small>Change asset status and record downtime</small> | C | C |  |  |  |  |  |  | C |  |  |  |
-| `vendor.read`<br><small>View vendors</small> | C | C | C | C | C |  |  | C | C | C |  |  |
+| `vendor.read`<br><small>View vendors</small> | C | C | C | C | C |  |  | C | C | C | C |  |
 | `vendor.manage`<br><small>Create and edit vendors</small> | C | C |  |  |  |  |  | C |  |  |  |  |
 | `project.read`<br><small>View chapter-visible projects</small> | C | C | C | C | C | C | C | C | C | C | C |  |
 | `project.read_private`<br><small>View private projects without being a member</small> | C | C | P |  |  |  |  |  |  |  | C |  |
@@ -38,7 +38,7 @@ Scopes: **C** chapter-wide · **P** projects the user is a member of · **T** te
 | `work_order.cancel`<br><small>Cancel work orders</small> | C | C | P | T |  |  |  |  | C |  |  |  |
 | `work_order.comment`<br><small>Comment on work orders</small> | C | C | C | C | C | C |  | C | C | C |  |  |
 | `work_order.log_time`<br><small>Record time and cost entries</small> | C | C | C | C | A | A |  | A | A | A |  |  |
-| `work_order.attach`<br><small>Upload files to work orders and projects</small> | C | C | C | C | C | C |  | C | C | C |  |  |
+| `work_order.attach`<br><small>Upload files to work orders, projects, assets, parts and purchase requests</small> | C | C | C | C | C | C |  | C | C | C |  |  |
 | `saved_filter.share`<br><small>Share saved filters with a team or the chapter</small> | C | C |  |  |  |  |  |  |  |  |  |  |
 | `report.view`<br><small>View reports and dashboards</small> | C | C | C | C | C |  |  | C | C | C | C | C |
 | `report.export`<br><small>Export report data</small> | C | C | P |  |  |  |  |  |  | C | C |  |
@@ -46,10 +46,11 @@ Scopes: **C** chapter-wide · **P** projects the user is a member of · **T** te
 | `notification.read`<br><small>Receive in-app notifications</small> | C | C | C | C | C | C | C | C | C | C | C |  |
 | `request.submit`<br><small>Submit requests</small> | C | C |  |  | C | C | C | C | C | C |  |  |
 | `request.review`<br><small>Review, approve, decline and convert requests</small> | C | C |  |  |  |  |  |  |  |  |  |  |
-| `inventory.read`<br><small>View parts inventory</small> | C | C |  |  |  |  |  | C |  |  |  |  |
+| `inventory.read`<br><small>View parts inventory</small> | C | C | C | C | C | C |  | C | C | C | C |  |
 | `inventory.manage`<br><small>Receive, issue, transfer and count parts</small> | C | C |  |  |  |  |  | C |  |  |  |  |
-| `purchase.submit`<br><small>Submit purchase requests</small> | C | C |  |  |  |  |  | C |  |  |  |  |
-| `purchase.review`<br><small>Approve purchase requests</small> | C | C |  |  |  |  |  | C |  | C | C |  |
+| `purchase.submit`<br><small>Submit purchase requests</small> | C | C | C | C | C |  |  | C | C | C |  |  |
+| `purchase.review`<br><small>Approve purchase requests</small> | C | C |  |  |  |  |  |  |  | C | C |  |
+| `purchase.advisor_review`<br><small>Give faculty-advisor sign-off on purchase requests</small> | C | C |  |  |  |  |  |  |  |  | C |  |
 | `procedure.read`<br><small>View procedures</small> | C | C |  |  |  |  |  |  | C |  |  |  |
 | `procedure.manage`<br><small>Author procedure drafts</small> | C | C |  |  |  |  |  |  | C |  |  |  |
 | `procedure.publish`<br><small>Publish procedure versions</small> | C | C |  |  |  |  |  |  | C |  |  |  |

@@ -1,6 +1,6 @@
 # ASME Ops
 
-ASME Ops is the ASME @ UIowa chapter's operations workspace: projects and milestones, work orders, assets, teams and users, locations, categories, vendors, comments, files, notifications, saved filters, global search and an operations report, with organization scoping, twelve scoped roles and an immutable audit trail.
+ASME Ops is the ASME @ UIowa chapter's operations workspace: projects and milestones, work orders, assets, parts inventory, purchase requests, teams and users, locations, categories, vendors, comments, files, notifications, saved filters, global search and an operations report, with organization scoping, twelve scoped roles, an append-only stock ledger and an immutable audit trail.
 
 This repository contains only ASME Ops. It is one Flask application (package `asme/`) plus a React + TypeScript single-page app (`apps/ops-web/`) that is built into `static/ops/` and served at `/app`. Everything else the server exposes is JSON under `/api`, and `/` redirects to `/app`. There is no public website, member/admin portal, kiosk, landing page or server-rendered HTML sign-in page.
 
@@ -8,7 +8,8 @@ This repository contains only ASME Ops. It is one Flask application (package `as
 
 ```
 app.py                 WSGI entry point (gunicorn app:app)
-manage.py              upgrade / seed / evaluate / reconcile / worker / serve / routes
+manage.py              upgrade / seed / evaluate / reconcile / reconcile-ops-inventory /
+                       worker / serve / routes
 asme/
   __init__.py          create_app() factory
   config.py            typed Settings - every ASME_* var resolved once, validated at boot
@@ -16,8 +17,9 @@ asme/
                        services, serializers, validation, storage
   blueprints/
     ops/               /api/v1 endpoints for ASME Ops (auth, session, users, teams, locations,
-                       categories, assets, vendors, projects, work orders, comments, attachments,
-                       saved filters, notifications, changes, reports, search, setup)
+                       categories, assets, vendors, projects, work orders, parts and inventory,
+                       work-order parts, purchase requests, comments, attachments, saved filters,
+                       notifications, changes, reports, search, setup)
     ops_app.py         serves the SPA at /app, redirects / to /app, /healthz
     api_v1.py          legacy JSON API (items, checkouts, print requests, events, bookings, onboarding)
     api_legacy.py      legacy /api endpoints
@@ -151,7 +153,7 @@ See `docs/deployment.md` for the full release checklist and smoke test.
 
 The earlier chapter platform's public website, member/admin portal, kiosk and NFC check-in screens and standalone sign-in pages have been removed. Its backend is still present, without any user interface, because production databases may hold members, inventory items, checkouts and attendance records:
 
-- tool checkout inventory with the append-only stock ledger (`asme/services/inventory.py`)
+- tool checkout inventory with its own append-only stock ledger (`asme/services/inventory.py`) - unrelated to and not read by the ASME Ops parts inventory, which has its own tables and ledger
 - 3D print requests (`asme/services/fabrication.py`)
 - attendance (`asme/services/attendance.py`)
 - room scheduling mirrored to Google Calendar or Outlook (`asme/services/scheduling.py`, `asme/integrations`, `OUTLOOK_CALENDAR_SETUP.md`)

@@ -14,6 +14,7 @@ import { CommentsCard } from './CommentsCard'
 import { CompleteDialog } from './CompleteDialog'
 import { AddCostDialog, AssigneesDialog, CancelDialog, DependencyDialog, LogTimeDialog, WatchersDialog } from './DetailDialogs'
 import { FilesCard } from './FilesCard'
+import { PartsReadinessBadge, WorkOrderPartsSection } from './WorkOrderPartsSection'
 import { DueLabel, workTypeLabel } from './WorkOrderList'
 import styles from './work-orders.module.css'
 
@@ -209,6 +210,7 @@ export function WorkOrderDetail({ workOrder: wo, listSearch }: WorkOrderDetailPr
         <span className={styles.badges}>
           <StatusBadge status={wo.status} />
           <PriorityBadge priority={wo.priority} />
+          <PartsReadinessBadge workOrderId={wo.id} />
           <DueLabel workOrder={wo} />
         </span>
       }
@@ -467,6 +469,8 @@ export function WorkOrderDetail({ workOrder: wo, listSearch }: WorkOrderDetailPr
             )}
           </div>
         </Card>
+
+        <WorkOrderPartsSection workOrder={wo} />
 
         <Card
           title="Time & cost"

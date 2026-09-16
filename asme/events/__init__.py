@@ -36,6 +36,8 @@ PROJECT_CREATED = "ops.project.created"
 WORK_ORDER_CREATED = "ops.work_order.created"
 WORK_ORDER_STATUS_CHANGED = "ops.work_order.status_changed"
 ASSET_STATUS_CHANGED = "ops.asset.status_changed"
+INVENTORY_LOW_STOCK = "ops.inventory.low_stock"
+PURCHASE_REQUEST_STATUS_CHANGED = "ops.purchase_request.status_changed"
 
 ALL_EVENTS = (
     LOAN_OPENED,
@@ -57,6 +59,8 @@ ALL_EVENTS = (
     WORK_ORDER_CREATED,
     WORK_ORDER_STATUS_CHANGED,
     ASSET_STATUS_CHANGED,
+    INVENTORY_LOW_STOCK,
+    PURCHASE_REQUEST_STATUS_CHANGED,
 )
 
 

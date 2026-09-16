@@ -1,5 +1,5 @@
-"""Global search across work orders, projects, assets, locations, categories
-and members.
+"""Global search across work orders, projects, assets, parts, purchase requests,
+locations, categories and members.
 
 Every group is filtered by the caller's visibility:
 
@@ -8,6 +8,9 @@ Every group is filtered by the caller's visibility:
 * projects through the project visibility rule (chapter projects need
   ``project.read``; private ones need membership or ``project.read_private``);
 * assets need ``asset.read`` and go through ``policy.visible_project_filter``;
+* parts need ``inventory.read`` (name, sku, manufacturer part number, QR code);
+* purchase requests go through ``entities.visible_purchase_requests_query`` -
+  the plan's read rule - and match the title or the number (``12``, ``PR-12``);
 * locations need ``location.read``; categories need ``category.read``;
 * members (active memberships) appear only for holders of ``team.read`` or
   ``user.read``.
@@ -23,13 +26,13 @@ from sqlalchemy import or_, select
 from asme.extensions import db
 from asme.models import User
 from asme.ops import policy
-from asme.ops.models import Asset, Category, Location, Membership, OpsProject, WorkOrder
+from asme.ops.models import Asset, Category, Location, Membership, OpsProject, Part, PurchaseRequest, WorkOrder
 from asme.ops.validation import ValidationErrors
 
 MIN_QUERY_LENGTH = 2
 DEFAULT_LIMIT = 8
 MAX_LIMIT = 20
-GROUPS = ("work_orders", "projects", "assets", "locations", "categories", "users")
+GROUPS = ("work_orders", "projects", "assets", "parts", "purchase_requests", "locations", "categories", "users")
 
 
 def clamp_limit(value) -> int:
@@ -63,6 +66,8 @@ def search(ctx, q: str, limit: int = DEFAULT_LIMIT) -> dict:
             "work_orders": _work_orders(ctx, text, pattern, limit),
             "projects": _projects(ctx, pattern, limit),
             "assets": _assets(ctx, pattern, limit),
+            "parts": _parts(ctx, pattern, limit),
+            "purchase_requests": _purchase_requests(ctx, text, pattern, limit),
             "locations": _locations(ctx, pattern, limit),
             "categories": _categories(ctx, pattern, limit),
             "users": _users(ctx, pattern, limit),
@@ -112,6 +117,38 @@ def _assets(ctx, pattern: str, limit: int) -> list[Asset]:
         .limit(limit)
     )
     return list(db.session.scalars(stmt))
+
+
+def _parts(ctx, pattern: str, limit: int) -> list[Part]:
+    if not ctx.has("inventory.read"):
+        return []
+    stmt = (
+        select(Part)
+        .where(
+            Part.organization_id == ctx.org.id,
+            Part.is_active.is_(True),
+            or_(
+                Part.name.ilike(pattern, escape="\\"),
+                Part.sku.ilike(pattern, escape="\\"),
+                Part.manufacturer_part_number.ilike(pattern, escape="\\"),
+                Part.qr_code.ilike(pattern, escape="\\"),
+            ),
+        )
+        .order_by(Part.name.asc())
+        .limit(limit)
+    )
+    return list(db.session.scalars(stmt))
+
+
+def _purchase_requests(ctx, text: str, pattern: str, limit: int) -> list[PurchaseRequest]:
+    from asme.ops.services.entities import visible_purchase_requests_query
+
+    criteria = [PurchaseRequest.title.ilike(pattern, escape="\\")]
+    number = _number_of(text[3:] if text[:3].lower() == "pr-" else text)
+    if number is not None:
+        criteria.append(PurchaseRequest.number == number)
+    query = visible_purchase_requests_query(ctx).filter(or_(*criteria))
+    return query.order_by(PurchaseRequest.number.desc()).limit(limit).all()
 
 
 def _locations(ctx, pattern: str, limit: int) -> list[Location]:
