@@ -1,1 +1,0 @@
-import{yn as e}from"./ui-CdTsMCRY.js";import{t}from"./index-DsHNyhWt.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Messages`,stage:3,description:`Team, project, group and direct conversations with threads and reactions.`})}export{r as default};

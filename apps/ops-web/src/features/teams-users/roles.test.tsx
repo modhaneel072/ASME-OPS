@@ -10,9 +10,9 @@ afterEach(() => {
 })
 
 describe('permission grouping', () => {
-  it('orders groups by module and parks unknown prefixes under Later stages', () => {
+  it('orders groups by module and parks unknown prefixes under Coming soon', () => {
     const groups = groupPermissionKeys(['request.submit', 'work_order.edit', 'team.manage', 'team.read', 'chapter.setup.manage', 'sponsor.manage'])
-    expect(groups.map((group) => group.label)).toEqual(['Chapter', 'Teams', 'Work orders', 'Later stages'])
+    expect(groups.map((group) => group.label)).toEqual(['Chapter', 'Teams', 'Work orders', 'Coming soon'])
     expect(groups[1].keys).toEqual(['team.manage', 'team.read'])
     expect(groups[3].keys).toEqual(['request.submit', 'sponsor.manage'])
   })
@@ -31,7 +31,7 @@ describe('Roles tab', () => {
     const headers = within(table).getAllByRole('columnheader')
     expect(headers.map((header) => header.textContent)).toEqual(['Permission', 'Chapter Administrator1 member', 'Team Lead1 member', 'Full Member3 members'])
 
-    for (const label of ['Chapter', 'Users', 'Teams', 'Work orders', 'Later stages']) {
+    for (const label of ['Chapter', 'Users', 'Teams', 'Work orders', 'Coming soon']) {
       expect(within(table).getByRole('rowheader', { name: label })).toBeInTheDocument()
     }
     expect(within(table).queryByRole('rowheader', { name: 'Locations' })).not.toBeInTheDocument()

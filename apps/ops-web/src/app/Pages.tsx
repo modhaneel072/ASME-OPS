@@ -14,11 +14,10 @@ export function NotFoundPage() {
 }
 
 /**
- * Navigation target for modules that ship in a later stage. It is a page, not a
- * control: nothing on it pretends to work. The stage number tells the reader
- * where the module sits in the build plan.
+ * Navigation target for a module that is not built yet. It is a page, not a
+ * control: nothing on it pretends to work.
  */
-export function ComingSoon({ title, stage, description }: { title: string; stage: number; description: string }) {
+export function ComingSoon({ title, description }: { title: string; description: string }) {
   return (
     <>
       <PageHeader title={title} />
@@ -26,12 +25,8 @@ export function ComingSoon({ title, stage, description }: { title: string; stage
         <div className={styles.pageBody}>
           <EmptyState
             illustration="folder"
-            title={`${title} arrives in Stage ${stage}`}
-            description={
-              <>
-                {description} Progress is tracked in <code>docs/implementation-status.md</code>.
-              </>
-            }
+            title={`${title} is coming soon`}
+            description={description}
             action={
               <Link to="/work-orders" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <ArrowLeft size={14} aria-hidden="true" /> Back to Work Orders

@@ -1,1 +1,0 @@
-import{yn as e}from"./ui-CdTsMCRY.js";import{t}from"./index-DsHNyhWt.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Purchase Requests`,stage:4,description:`Purchase requests, approvals and receiving.`})}export{r as default};

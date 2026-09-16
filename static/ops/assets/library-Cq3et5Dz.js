@@ -1,1 +1,0 @@
-import{yn as e}from"./ui-CdTsMCRY.js";import{t}from"./index-DsHNyhWt.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Library`,stage:5,description:`Work-order templates, versioned procedures and documents.`})}export{r as default};

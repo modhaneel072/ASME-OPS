@@ -62,10 +62,10 @@ describe('SettingsPage navigation', () => {
   it('renders the coming-soon pages for unbuilt sections', () => {
     mockApi({})
     const { unmount } = renderSettings('notifications')
-    expect(screen.getByText('Notification settings arrives in Stage 7')).toBeInTheDocument()
+    expect(screen.getByText('Notification settings is coming soon')).toBeInTheDocument()
     unmount()
     renderSettings('integrations')
-    expect(screen.getByText('Integrations arrives in Stage 8')).toBeInTheDocument()
+    expect(screen.getByText('Integrations is coming soon')).toBeInTheDocument()
   })
 
   it('handles an unknown section without crashing', () => {

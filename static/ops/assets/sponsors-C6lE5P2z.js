@@ -1,0 +1,1 @@
+import{yn as e}from"./ui-Bq9jYrur.js";import{t}from"./index-B6RhHbAC.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Sponsors`,description:`Sponsor records, tiers and deliverables.`})}export{r as default};

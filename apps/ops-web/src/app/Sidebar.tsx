@@ -21,15 +21,6 @@ interface SidebarProps {
   onCloseMobile: () => void
 }
 
-function StageTag({ stage }: { stage?: number }) {
-  if (!stage) return null
-  return (
-    <span className={styles.itemTag} title={`Ships in stage ${stage}`}>
-      S{stage}
-    </span>
-  )
-}
-
 function NavEntry({ item, collapsed, onNavigate }: { item: NavItem; collapsed: boolean; onNavigate: () => void }) {
   const location = useLocation()
   const childActive = item.children?.some((child) => location.pathname.startsWith(child.to)) ?? false
@@ -49,7 +40,6 @@ function NavEntry({ item, collapsed, onNavigate }: { item: NavItem; collapsed: b
             <Icon size={18} aria-hidden="true" />
           </span>
           <span className={styles.itemLabel}>{item.label}</span>
-          <StageTag stage={item.stage} />
           <ChevronRight size={16} className={cn(styles.itemChevron, open && styles.itemChevron_open)} aria-hidden="true" />
         </button>
         {open && (
@@ -57,7 +47,6 @@ function NavEntry({ item, collapsed, onNavigate }: { item: NavItem; collapsed: b
             {item.children.map((child) => (
               <NavLink key={child.key} to={child.to} className={({ isActive }) => cn(styles.child, isActive && styles.child_active)} onClick={onNavigate}>
                 <span className={styles.itemLabel}>{child.label}</span>
-                <StageTag stage={child.stage} />
               </NavLink>
             ))}
           </div>
@@ -72,7 +61,6 @@ function NavEntry({ item, collapsed, onNavigate }: { item: NavItem; collapsed: b
         <Icon size={18} aria-hidden="true" />
       </span>
       <span className={styles.itemLabel}>{item.label}</span>
-      <StageTag stage={item.stage} />
     </NavLink>
   )
   return collapsed ? (

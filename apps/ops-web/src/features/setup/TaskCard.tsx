@@ -34,11 +34,9 @@ export function TaskStatus({ task }: { task: SetupTask }) {
         <span className={cn(styles.indicator, styles.indicator_unavailable)} role="img" aria-label="Not available yet">
           <Lock size={18} aria-hidden="true" />
         </span>
-        {task.stage !== null && (
-          <Badge tone="neutral" size="sm">
-            Stage {task.stage}
-          </Badge>
-        )}
+        <Badge tone="neutral" size="sm">
+          Coming soon
+        </Badge>
       </>
     )
   }

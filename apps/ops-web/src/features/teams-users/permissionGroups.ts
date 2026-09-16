@@ -36,7 +36,7 @@ export const PERMISSION_GROUPS: ReadonlyArray<{ prefix: string; label: string }>
   { prefix: 'audit', label: 'Audit' },
   { prefix: 'notification', label: 'Notifications' },
 ]
-export const LATER_STAGES_LABEL = 'Later stages'
+export const LATER_STAGES_LABEL = 'Coming soon'
 
 export interface PermissionGroup {
   label: string

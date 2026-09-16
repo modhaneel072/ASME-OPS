@@ -16,8 +16,6 @@ export const SetupTask = z.object({
   description: z.string(),
   estimated_minutes: z.number(),
   status: SetupTaskStatus,
-  /** Build stage in which an `unavailable` task ships; null when the task is live. */
-  stage: z.number().nullable(),
   /** Absolute app path, e.g. `/app/locations`. */
   href: z.string(),
   /** Live count backing the check (assets registered, active members, …) or null. */
@@ -93,7 +91,7 @@ export function nextSetupTask(progress: Pick<SetupProgress, 'phases'>): SetupTas
 }
 
 export interface SetupPhaseSummary {
-  /** Required tasks that can be completed in this stage. */
+  /** Required tasks that can be completed now. */
   available: number
   completed: number
   /** True when every task in the phase belongs to a later stage. */

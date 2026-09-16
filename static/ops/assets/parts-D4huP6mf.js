@@ -1,1 +1,0 @@
-import{yn as e}from"./ui-CdTsMCRY.js";import{t}from"./index-DsHNyhWt.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Parts Inventory`,stage:4,description:`Parts, storage locations and immutable inventory transactions.`})}export{r as default};

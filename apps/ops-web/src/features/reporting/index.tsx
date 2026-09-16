@@ -13,7 +13,6 @@ const PLANNED_REPORTS: Record<string, { title: string; description: string }> = 
   builder: { title: 'Report Builder', description: 'Compose custom reports from any chapter data.' },
 }
 
-const PLANNED_STAGE = 7
 
 function titleFromKey(key: string): string {
   return key
@@ -25,21 +24,20 @@ function titleFromKey(key: string): string {
 
 /**
  * `/reporting/:report` and `/reporting/dashboards/:dashboardId`. Only the
- * Operations dashboard exists in this stage; every other key is navigation to
- * a planned report and renders the ComingSoon page.
+ * Operations dashboard is built; every other key is navigation to a planned
+ * report and renders the ComingSoon page.
  */
 export default function ReportingPage() {
   const { report, dashboardId } = useParams<{ report?: string; dashboardId?: string }>()
   if (dashboardId) {
-    return <ComingSoon title={PLANNED_REPORTS.dashboards.title} stage={PLANNED_STAGE} description={PLANNED_REPORTS.dashboards.description} />
+    return <ComingSoon title={PLANNED_REPORTS.dashboards.title} description={PLANNED_REPORTS.dashboards.description} />
   }
   if (report === 'operations') return <OperationsDashboard />
   const planned = report ? PLANNED_REPORTS[report] : undefined
   return (
     <ComingSoon
       title={planned?.title ?? titleFromKey(report ?? 'reporting')}
-      stage={PLANNED_STAGE}
-      description={planned?.description ?? 'This report is planned for a later stage of ASME Ops.'}
+      description={planned?.description ?? 'This report is not built yet.'}
     />
   )
 }

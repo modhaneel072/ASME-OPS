@@ -447,13 +447,13 @@ describe('Planned reports', () => {
     mockReport()
     renderReporting(route)
     expect(screen.getByRole('heading', { name: title })).toBeInTheDocument()
-    expect(screen.getByText(`${title} arrives in Stage 7`)).toBeInTheDocument()
+    expect(screen.getByText(`${title} is coming soon`)).toBeInTheDocument()
     expect(screen.queryByRole('radiogroup', { name: 'Date range' })).not.toBeInTheDocument()
   })
 
   it('derives a title for an unknown report key', () => {
     mockReport()
     renderReporting('/reporting/something-else')
-    expect(screen.getByText('Something Else arrives in Stage 7')).toBeInTheDocument()
+    expect(screen.getByText('Something Else is coming soon')).toBeInTheDocument()
   })
 })

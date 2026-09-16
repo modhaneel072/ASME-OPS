@@ -20,7 +20,7 @@ export function PhaseCard({ phase, index, onOpenGuide }: { phase: SetupPhase; in
         </div>
         <div className={styles.phaseSummary}>
           {summary.deferred ? (
-            <Badge tone="outline">Later stages</Badge>
+            <Badge tone="outline">Coming soon</Badge>
           ) : allDone ? (
             <Badge tone="success" dot>
               Complete

@@ -12,7 +12,6 @@ function task(overrides: Partial<SetupTask> & Pick<SetupTask, 'key' | 'title' | 
     description: `${overrides.title} description.`,
     estimated_minutes: 5,
     status: 'incomplete',
-    stage: null,
     count: null,
     optional: false,
     ...overrides,
@@ -41,8 +40,8 @@ function freshProgress(): SetupProgress {
         tasks: [
           task({ key: 'first_project', title: 'Create your first project', href: '/app/projects', count: 0 }),
           task({ key: 'categories', title: 'Review categories', href: '/app/categories', status: 'complete', count: 14 }),
-          task({ key: 'parts', title: 'Stock your parts inventory', href: '/app/parts', status: 'unavailable', stage: 4, estimated_minutes: 15 }),
-          task({ key: 'procedure', title: 'Write a procedure', href: '/app/procedures', status: 'unavailable', stage: 5, estimated_minutes: 20 }),
+          task({ key: 'parts', title: 'Stock your parts inventory', href: '/app/parts', status: 'unavailable', estimated_minutes: 15 }),
+          task({ key: 'procedure', title: 'Write a procedure', href: '/app/procedures', status: 'unavailable', estimated_minutes: 20 }),
         ],
       },
       {
@@ -50,10 +49,10 @@ function freshProgress(): SetupProgress {
         title: 'Standardize Operations',
         description: 'Automate recurring work, open a request portal and build dashboards.',
         tasks: [
-          task({ key: 'maintenance_plan', title: 'Create a maintenance plan', href: '/app/maintenance-plans', status: 'unavailable', stage: 5 }),
-          task({ key: 'request_portal', title: 'Open the request portal', href: '/app/requests', status: 'unavailable', stage: 3 }),
-          task({ key: 'automation', title: 'Add an automation', href: '/app/automations', status: 'unavailable', stage: 6 }),
-          task({ key: 'dashboard', title: 'Build a dashboard', href: '/app/dashboards', status: 'unavailable', stage: 7 }),
+          task({ key: 'maintenance_plan', title: 'Create a maintenance plan', href: '/app/maintenance-plans', status: 'unavailable' }),
+          task({ key: 'request_portal', title: 'Open the request portal', href: '/app/requests', status: 'unavailable' }),
+          task({ key: 'automation', title: 'Add an automation', href: '/app/automations', status: 'unavailable' }),
+          task({ key: 'dashboard', title: 'Build a dashboard', href: '/app/dashboards', status: 'unavailable' }),
         ],
       },
     ],
@@ -136,10 +135,10 @@ describe('SetupPage', () => {
     expect(within(categories).queryByRole('link', { name: /Set up/ })).not.toBeInTheDocument()
     expect(within(categories).getByText('14 categories')).toBeInTheDocument()
 
-    // Unavailable: lock + stage badge, no control at all.
+    // Unavailable: lock + coming-soon badge, no control at all.
     const parts = taskCard('parts')
     expect(within(parts).getByRole('img', { name: 'Not available yet' })).toBeInTheDocument()
-    expect(within(parts).getByText('Stage 4')).toBeInTheDocument()
+    expect(within(parts).getByText('Coming soon')).toBeInTheDocument()
     expect(within(parts).queryByRole('link')).not.toBeInTheDocument()
     expect(within(parts).queryByRole('button')).not.toBeInTheDocument()
 
@@ -152,7 +151,7 @@ describe('SetupPage', () => {
     // Phase summaries.
     expect(screen.getByText('0 of 4 done')).toBeInTheDocument()
     expect(screen.getByText('1 of 2 done')).toBeInTheDocument()
-    expect(screen.getByText('Later stages')).toBeInTheDocument()
+    expect(screen.getAllByText('Coming soon').length).toBeGreaterThan(0)
 
     // Progress panel and the highlighted next task.
     expect(screen.getByRole('progressbar', { name: 'Setup progress' })).toHaveAttribute('aria-valuenow', '17')

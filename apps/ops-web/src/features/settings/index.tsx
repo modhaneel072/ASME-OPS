@@ -15,17 +15,17 @@ interface SectionDef {
   label: string
   description: string
   icon: LucideIcon
-  /** Stage in which the section ships; undefined means built. */
-  stage?: number
+  /** True while the section is not built yet. */
+  comingSoon?: boolean
 }
 
 export const SETTINGS_SECTIONS: SectionDef[] = [
   { key: 'profile', label: 'Profile', description: 'Your account, role and permissions in this chapter.', icon: UserRound },
   { key: 'chapter', label: 'Chapter', description: 'Name, time zone, academic year and contact details.', icon: Building2 },
   { key: 'roles', label: 'Roles', description: 'What each role in the chapter can do.', icon: ShieldCheck },
-  { key: 'notifications', label: 'Notifications', description: 'Which events reach you and how.', icon: Bell, stage: 7 },
-  { key: 'integrations', label: 'Integrations', description: 'Calendar, storage and messaging connections.', icon: Plug, stage: 8 },
-  { key: 'audit', label: 'Audit log', description: 'Who changed what, and when.', icon: History, stage: 8 },
+  { key: 'notifications', label: 'Notifications', description: 'Which events reach you and how.', icon: Bell, comingSoon: true },
+  { key: 'integrations', label: 'Integrations', description: 'Calendar, storage and messaging connections.', icon: Plug, comingSoon: true },
+  { key: 'audit', label: 'Audit log', description: 'Who changed what, and when.', icon: History, comingSoon: true },
 ]
 
 function isSection(value: string | undefined): value is SettingsSection {
@@ -49,7 +49,7 @@ export default function SettingsPage() {
               label="Settings sections"
               value={current ?? 'profile'}
               onChange={(next) => navigate(`/settings/${next}`)}
-              items={SETTINGS_SECTIONS.map((s) => ({ value: s.key, label: s.stage ? `${s.label} · S${s.stage}` : s.label }))}
+              items={SETTINGS_SECTIONS.map((s) => ({ value: s.key, label: s.comingSoon ? `${s.label} · soon` : s.label }))}
             />
           </div>
         ) : (
@@ -64,9 +64,9 @@ export default function SettingsPage() {
                         <Icon size={16} aria-hidden="true" />
                       </span>
                       <span>{s.label}</span>
-                      {s.stage && (
-                        <span className={styles.subnavTag} title={`Ships in stage ${s.stage}`}>
-                          S{s.stage}
+                      {s.comingSoon && (
+                        <span className={styles.subnavTag} title="Not built yet">
+                          Soon
                         </span>
                       )}
                     </NavLink>
@@ -82,11 +82,11 @@ export default function SettingsPage() {
               <EmptyState illustration="search" title="Settings section not found" description="Pick a section from the navigation." action={<LinkButton to="/settings/profile">Go to Profile</LinkButton>} />
             </div>
           ) : current === 'notifications' ? (
-            <ComingSoon title="Notification settings" stage={7} description="Choose which chapter events notify you in-app and by email." />
+            <ComingSoon title="Notification settings" description="Choose which chapter events notify you in-app and by email." />
           ) : current === 'integrations' ? (
-            <ComingSoon title="Integrations" stage={8} description="Connect calendars, cloud storage and messaging to ASME Ops." />
+            <ComingSoon title="Integrations" description="Connect calendars, cloud storage and messaging to ASME Ops." />
           ) : current === 'audit' ? (
-            <ComingSoon title="Audit log" stage={8} description="Browse every change made in the chapter workspace." />
+            <ComingSoon title="Audit log" description="Browse every change made in the chapter workspace." />
           ) : (
             <div className={styles.section}>
               <header className={styles.sectionHeader}>
