@@ -1,0 +1,670 @@
+/*  ASME at Iowa — public welcome page
+    ─────────────────────────────────────────────────────────────────────
+    The page is the G440 material rack. Nine executives are nine lengths of
+    bar stock stood on end on a mill-finish aluminium plate. Gold is light,
+    not decoration: it appears only where light falls (the load-time streak,
+    the one bar you have pulled, the one gold button) and on focus.
+
+    Layers on each bar are load-bearing: the duotone, the vignette that
+    crushes nine different backgrounds to one alloy, the grain, the chamfers.
+    Simplify them and the page collapses into a generic slat accordion.
+    ───────────────────────────────────────────────────────────────────── */
+
+:root {
+  --plate:        #C9CBCE;   /* mill-finish 6061 */
+  --plate-light:  #D6D8DA;
+  --plate-deep:   #AEB1B5;
+  --black:        #000000;   /* Iowa black, honest */
+  --gold:         #FFCD00;   /* Iowa gold, as light */
+  --gold-shadow:  #6B5300;
+  --pei:          #D9AE4E;   /* print-bed amber, toned so it does not fight the gold */
+  --water:        #0E1F2E;   /* still water, MATE ROV */
+  --steel:        #DEE1E4;   /* brushed stainless, medical */
+  --ink:          #000000;
+  --ink-soft:     rgba(0,0,0,.68);
+  --ink-faint:    rgba(0,0,0,.42);
+
+  --display: "Big Shoulders Display", "Archivo Narrow", Impact, "Arial Narrow", sans-serif;
+  --serif:   "Source Serif 4", "Source Serif Pro", Georgia, "Times New Roman", serif;
+
+  --gutter: clamp(16px, 4vw, 56px);
+  --slot: 2px;                /* plate showing between bars */
+  --pulled-w: 320px;          /* judge's cap: keeps weak sources under ~1.3x */
+  --ease-pull: cubic-bezier(.16, 1, .3, 1);
+
+  /* streak position (tweened by GSAP) and rack lighting */
+  --lx: 30%;
+  --streak-angle: 100deg;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--plate);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.55;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { display: block; max-width: 100%; }
+h1, h2, h3, p, ul, ol, figure { margin: 0; padding: 0; }
+ul, ol { list-style: none; }
+a { color: inherit; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a, button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+
+/* Brushed grain on the plate itself: 1px hairlines at 5%, vertical. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.055) 0 1px, transparent 1px 3px);
+}
+.page { position: relative; z-index: 1; }
+
+/* Pre-animation state, held from first paint until welcome.js takes over. */
+.pre-motion .bar { transform: translateX(115%); --lit: 0; }
+.pre-motion .hero { --lx: -30%; }
+.pre-motion .h1-block, .pre-motion .deck, .pre-motion .cta-row { visibility: hidden; }
+
+.skip { position: absolute; left: 8px; top: 8px; z-index: 50; padding: 8px 12px; background: var(--black); color: var(--gold); font-family: var(--display); font-weight: 700; font-size: 18px; text-decoration: none; transform: translateY(-200%); }
+.skip:focus-visible { transform: none; }
+
+@supports (padding: env(safe-area-inset-left)) {
+  :root { --gutter: max(clamp(16px, 4vw, 56px), env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px)); }
+  .titleblock { margin-bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* Links inside prose: a real underline, thickens on hover, never changes colour. */
+.prose a, .link {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: text-decoration-thickness .15s ease;
+}
+.prose a:hover, .link:hover { text-decoration-thickness: 2px; }
+
+/* Focus: two-tone so it reads on the plate and on the bars. */
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--black);
+}
+.bar-pull:focus-visible { outline-offset: -5px; box-shadow: none; }
+.bar-pull:focus-visible::after { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; box-shadow: inset 0 0 0 8px var(--black); }
+
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ── Buttons ────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 52px; padding: 0 28px;
+  font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: .01em;
+  text-decoration: none; line-height: 1;
+  border: 2px solid var(--black);
+  transition: transform .15s ease, background-color .15s ease, color .15s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn-gold { background: var(--gold); color: var(--black); }
+.btn-gold:hover { background: #FFD83D; }
+.btn-black { background: var(--black); color: var(--plate-light); }
+.btn-black:hover { color: #fff; }
+
+/* ── Header: on the plate, no bar, no border ────────────────────────── */
+.top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 24px;
+  padding: 22px var(--gutter) 0;
+}
+.wordmark {
+  font-family: var(--display); font-weight: 800; font-size: 26px; letter-spacing: .005em;
+  text-decoration: none; line-height: 1;
+}
+.wordmark small { display: block; font-family: var(--serif); font-weight: 400; font-size: 13px; color: var(--ink-soft); margin-top: 3px; letter-spacing: 0; }
+.top-nav { display: flex; gap: 22px; align-items: baseline; flex-wrap: wrap; }
+.top-nav a { text-decoration: none; font-size: 16.5px; }
+.top-nav a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.top-nav .sep { margin-left: 14px; }
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
+.hero {
+  position: relative;
+  isolation: isolate;
+  height: auto;
+  min-height: max(620px, calc(100vh - 72px));
+  min-height: max(620px, calc(100svh - 72px));
+  display: grid;
+  grid-template-rows: auto minmax(380px, 1fr);
+  overflow-x: clip;
+  overflow-y: visible;
+  padding-top: 26px;
+}
+/* The shop light: a soft band with a gold core that rakes across plate and rack. */
+.hero::before {
+  content: "";
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(var(--streak-angle),
+    transparent calc(var(--lx) - 22%),
+    rgba(0,0,0,.09)       calc(var(--lx) - 10%),
+    rgba(255,205,0,.60)   var(--lx),
+    rgba(0,0,0,.09)       calc(var(--lx) + 10%),
+    transparent           calc(var(--lx) + 22%));
+}
+.hero > * { position: relative; z-index: 1; }
+
+.hero-copy {
+  padding: 0 var(--gutter) 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, .7fr);
+  gap: 24px var(--gutter);
+  align-items: end;
+}
+.hero-aside { max-width: 52ch; padding-bottom: 6px; }
+.h1 {
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(40px, 5.3vw, 84px);
+  line-height: .9; letter-spacing: -.008em;
+  max-width: 16ch;
+}
+.h1 { text-wrap: balance; }
+.h1-cue-block { margin: 0; }
+.h1 .h1-line { display: block; }
+.h1 .h1-cue { font-weight: 500; color: var(--ink-soft); }
+.h1 .h1-cue.is-touch { display: none; }
+@media (hover: none) and (pointer: coarse) {
+  .h1 .h1-cue.is-mouse { display: none; }
+  .h1 .h1-cue.is-touch { display: block; }
+}
+.deck {
+  margin-top: 0;
+  font-size: clamp(17px, 1.35vw, 21px);
+  line-height: 1.5;
+  max-width: 58ch;
+}
+.cta-row { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; margin-top: 20px; }
+.cta-row .link { font-size: 17px; }
+
+/* The rack: bleeds to the right edge like a shelf that keeps going. */
+.rack-wrap { padding-left: var(--gutter); height: 100%; min-height: 0; }
+.rack {
+  display: flex;
+  gap: var(--slot);
+  height: 100%;
+  align-items: stretch;
+}
+
+/* ── One bar of stock ───────────────────────────────────────────────── */
+.bar, .inspect {
+  --lit: .3;          /* 0 = dark rack, .3 = rest, 1 = under the light; tweened */
+  --pos: 50% 30%;     /* per-photo object-position; overridden inline */
+  --zoom: 1;          /* per-photo scale; overridden inline */
+  --lift: 1;          /* per-photo brightness; overridden inline */
+  --kb: 1;            /* slow drift on the portrait while a sheet is held */
+  --hi-unlit: #7A7D82;   /* multiply ceiling at rest: caps bright backgrounds */
+  --hi-dim:   #4E5054;   /* the other eight while one is pulled */
+  --hi-lit:   #FFCD00;   /* gold anodize */
+  --lo-lit:   #2A2000;   /* lightened shadow floor when lit */
+}
+.bar {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--black);
+  display: flex; flex-direction: column;
+  transition: flex-basis .6s var(--ease-pull), flex-grow .6s var(--ease-pull);
+  /* the rectangular section: a light chamfer left, a dark one right */
+  box-shadow: inset 2px 0 0 rgba(255,255,255,.16), inset -2px 0 0 rgba(0,0,0,.7);
+  will-change: flex-basis;
+}
+.bar.is-pulled { flex: 0 0 var(--pulled-w); }
+
+/* Grain on the whole bar so the face reads as printed on brushed metal. */
+.bar::after {
+  content: "";
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 3px);
+}
+
+.bar-pull {
+  position: absolute; inset: 0; z-index: 4;
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  text-align: left;
+}
+
+/* Portrait slot: a fixed-height box at the top of the bar; the rest is bar. */
+.bar-portrait {
+  position: relative;
+  isolation: isolate;
+  flex: 0 1 58%;
+  height: auto;
+  min-height: 0;
+  max-height: calc(100% - 196px);
+  overflow: hidden;
+  background: var(--black);
+}
+.bar-portrait img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: var(--pos);
+  transform: scale(calc(var(--zoom) * var(--kb)));
+  transform-origin: var(--pos);
+  filter: grayscale(1) contrast(1.18) brightness(var(--lift));
+  transition: transform .6s var(--ease-pull);
+}
+.bar.is-pulled .bar-portrait img { transform: scale(calc(var(--zoom) * .96)); }
+
+/* Anodize: multiply colours the highlights, lighten colours the shadows.
+   Both are driven by --lit so GSAP can tween one number. */
+.bar-portrait::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  mix-blend-mode: multiply;
+  /* rest (.3) is the unlit ceiling; below rest it slides to the dim floor; above it, gold */
+  background: color-mix(in srgb, var(--hi-lit) calc(var(--lit) * 100%), color-mix(in srgb, var(--hi-unlit) calc(min(1, var(--lit) / .3) * 100%), var(--hi-dim)));
+}
+.bar-portrait::after {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  mix-blend-mode: lighten;
+  background: color-mix(in srgb, var(--lo-lit) calc(var(--lit) * 100%), #000);
+}
+@supports not (background: color-mix(in srgb, red 50%, blue)) {
+  .bar-portrait::before { background: var(--hi-unlit); }
+  .bar.is-pulled .bar-portrait::before { background: var(--hi-lit); }
+  .bar-portrait::after { background: #000; }
+  .bar.is-pulled .bar-portrait::after { background: var(--lo-lit); }
+}
+/* Crush the background: a top-and-sides vignette plus a fade into the bar body,
+   so studio black and atrium glass converge at the same point. */
+.bar-vignette {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background:
+    linear-gradient(to bottom, transparent 46%, rgba(0,0,0,.75) 82%, #000 100%),
+    radial-gradient(120% 90% at 50% 40%, transparent 32%, rgba(0,0,0,.55) 70%, rgba(0,0,0,.9) 100%);
+}
+
+/* Rest-state body: name and role run up the bar like a heat stamp. */
+.bar-body {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  padding: 14px 0 16px;
+  display: flex; align-items: flex-end; justify-content: flex-start;
+  overflow: hidden;
+}
+/* In vertical-rl the block axis runs right-to-left, so two block children sit
+   side by side; the 180deg turn makes them read bottom-to-top with the name
+   on the left. No flex here: flex axes swap in vertical writing modes. */
+.bar-stamp {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  display: block;
+  padding: 0 14px 0 6px;
+  height: 100%;
+  color: var(--plate-light);
+  transition: opacity .25s ease;
+}
+.bar-name {
+  display: block;
+  font-family: var(--display); font-weight: 700; font-size: 24px; line-height: 1; letter-spacing: .005em;
+  white-space: nowrap;
+}
+.bar-role {
+  display: block;
+  margin-block-start: 7px;
+  font-family: var(--serif); font-size: 12.5px; line-height: 1; color: rgba(214,216,218,.72);
+  white-space: nowrap;
+}
+.bar.is-pulled .bar-stamp { opacity: 0; }
+
+/* Pulled panel: black, sits over the lower part of the bar. */
+.bar-panel {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding: 0 18px 18px 20px;
+  color: var(--plate-light);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .35s ease .15s, visibility 0s linear .5s;
+}
+.bar.is-pulled .bar-panel { opacity: 1; visibility: visible; pointer-events: auto; transition-delay: .15s, 0s; }
+.bar-panel h3 {
+  font-family: var(--display); font-weight: 700; font-size: 34px; line-height: .95; letter-spacing: .005em;
+  color: var(--gold);
+}
+.bar-panel .panel-role { margin-top: 6px; font-size: 15px; color: rgba(214,216,218,.8); }
+.bar-panel .panel-charge { margin-top: 10px; font-size: 15px; line-height: 1.42; max-width: 32ch; }
+.bar-panel .panel-links { margin-top: 12px; display: flex; gap: 18px; flex-wrap: wrap; font-size: 15px; }
+.bar-panel .panel-links a { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.bar-panel .panel-links a:hover { text-decoration-thickness: 2px; }
+.bar-panel .panel-links span { color: rgba(214,216,218,.72); }
+
+/* No-JS fallback only: with scripts running, JS owns the pulled state so a
+   focused bar and a hovered bar can never both be open. */
+html:not(.js) .bar:focus-within { flex: 0 0 var(--pulled-w); }
+html:not(.js) .bar:focus-within .bar-panel { opacity: 1; visibility: visible; pointer-events: auto; }
+html:not(.js) .bar:focus-within .bar-stamp { opacity: 0; }
+
+
+/* ── The inspection run: one pinned frame per member ────────────────── */
+.inspect-run { position: relative; margin-top: clamp(48px, 6vw, 96px); }
+.inspect-stage {
+  position: relative;
+  isolation: isolate;
+  --lx: -30%;
+}
+/* the same shop light as the hero, swept once per member */
+.inspect-run.is-pinned .inspect-stage::before {
+  content: "";
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(100deg,
+    transparent calc(var(--lx) - 22%),
+    rgba(0,0,0,.09)       calc(var(--lx) - 10%),
+    rgba(255,205,0,.55)   var(--lx),
+    rgba(0,0,0,.09)       calc(var(--lx) + 10%),
+    transparent           calc(var(--lx) + 22%));
+}
+.inspect-index {
+  position: absolute; z-index: 2; right: var(--gutter); top: 24px;
+  font-family: var(--display); font-weight: 900; line-height: .8; letter-spacing: -.01em;
+  font-size: clamp(56px, 7vw, 112px);
+  display: none;
+}
+.inspect-index .index-of { font-size: .42em; font-weight: 700; color: var(--ink-soft); margin-left: .08em; }
+.inspect-run.is-pinned .inspect-index { display: block; }
+
+.inspect-list { position: relative; z-index: 1; }
+.inspect {
+  display: grid;
+  grid-template-columns: minmax(260px, 38vw) 1fr;
+  gap: var(--gutter);
+  align-items: center;
+  padding: clamp(24px, 4vw, 56px) var(--gutter);
+  min-height: 100svh;
+}
+.inspect-run.is-pinned .inspect-stage { height: 100svh; overflow: clip; }
+.inspect-run.is-pinned .inspect-list { position: absolute; inset: 0; }
+.inspect-run.is-pinned .inspect { position: absolute; inset: 0; min-height: 0; visibility: hidden; }
+
+.inspect-bar {
+  position: relative;
+  height: min(82svh, 780px);
+  background: var(--black);
+  box-shadow: inset 2px 0 0 rgba(255,255,255,.16), inset -2px 0 0 rgba(0,0,0,.7);
+  display: flex; flex-direction: column;
+  will-change: transform;
+}
+.inspect-bar::after {
+  content: "";
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: repeating-linear-gradient(90deg, rgba(255,255,255,.05) 0 1px, transparent 1px 3px);
+}
+.inspect-bar .bar-portrait { flex: 1 1 auto; height: auto; min-height: 0; overflow: hidden; }
+.inspect-bar .bar-portrait img { position: absolute; inset: 0; width: 100%; height: 100%; transition: none; }
+.inspect-bar .bar-vignette {
+  background:
+    linear-gradient(to bottom, transparent 62%, rgba(0,0,0,.7) 90%, #000 100%),
+    radial-gradient(120% 90% at 50% 40%, transparent 40%, rgba(0,0,0,.5) 75%, rgba(0,0,0,.85) 100%);
+}
+.inspect-ref {
+  flex: none;
+  padding: 12px 16px 14px;
+  font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: .04em;
+  color: var(--plate-light);
+}
+
+.inspect-sheet { max-width: 62ch; position: relative; z-index: 1; }
+.sheet-count {
+  font-family: var(--display); font-weight: 900; line-height: .8; letter-spacing: -.01em;
+  font-size: clamp(64px, 8vw, 128px);
+  color: rgba(0,0,0,.14);
+  margin-bottom: -.12em;
+}
+.inspect-run.is-pinned .sheet-count { display: none; }
+.sheet-name {
+  font-family: var(--display); font-weight: 800;
+  font-size: clamp(44px, 6vw, 96px); line-height: .9; letter-spacing: -.008em;
+}
+.sheet-name .c { display: inline-block; }
+.sheet-role { margin-top: 10px; font-size: clamp(17px, 1.4vw, 21px); }
+.sheet-unit { color: var(--ink-soft); }
+.sheet-lines { margin-top: clamp(18px, 2.4vw, 32px); display: grid; gap: 14px; }
+.sheet-line { display: grid; grid-template-columns: 9.5em 1fr; gap: 12px; align-items: baseline; }
+.sheet-line dt { font-style: italic; font-size: 15px; color: var(--ink-soft); }
+.sheet-line dd { margin: 0; font-size: clamp(17px, 1.35vw, 20px); line-height: 1.45; }
+.sheet-contact { margin-top: clamp(18px, 2.2vw, 28px); display: flex; gap: 24px; flex-wrap: wrap; font-size: 17px; }
+
+.inspect-rail {
+  position: absolute; z-index: 2; left: 50%; bottom: 22px; transform: translateX(-50%);
+  display: none; gap: 6px;
+}
+.inspect-run.is-pinned .inspect-rail { display: flex; }
+.rail-tick { display: block; width: 26px; height: 22px; padding: 0; position: relative; }
+.rail-tick::before { content: ""; position: absolute; left: 0; right: 0; top: 9px; height: 4px; background: rgba(0,0,0,.28); transition: background .2s ease, transform .2s ease; }
+.rail-tick:hover::before { background: rgba(0,0,0,.6); }
+.rail-tick.is-active::before { background: var(--gold); box-shadow: 0 0 0 1px var(--black); transform: scaleY(1.6); }
+.rail-tick:focus-visible { outline-offset: 0; }
+.inspect-skip { position: absolute; z-index: 2; right: var(--gutter); bottom: 22px; display: none; font-size: 16px; }
+.inspect-run.is-pinned .inspect-skip { display: inline; }
+
+/* Bench bands: the code letters drift with scroll (set by JS) */
+.band-code { will-change: transform; }
+
+/* ── On the bench: three bands, each its material ───────────────────── */
+.bench { margin-top: clamp(64px, 9vw, 120px); }
+.bench-head { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 5vw, 76px); line-height: .92; padding: 0 var(--gutter) clamp(20px, 3vw, 36px); text-wrap: balance; }
+.band {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(180px, 32%) 1fr;
+  gap: var(--gutter);
+  padding: clamp(40px, 6vw, 84px) var(--gutter);
+  overflow: hidden;
+}
+.band-code {
+  font-family: var(--display); font-weight: 900;
+  font-size: clamp(120px, 15vw, 220px);
+  line-height: .78; letter-spacing: -.01em;
+  margin-top: -.06em;      /* the top of the code is cut by the band edge */
+  align-self: start;
+}
+.band-text { max-width: 60ch; align-self: center; }
+.band-name { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 3.2vw, 46px); line-height: 1; }
+.band-summary { margin-top: 14px; font-size: clamp(17px, 1.3vw, 20px); }
+.band-meta { margin-top: 20px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; font-size: 16px; }
+.tag {
+  display: inline-block;
+  font-family: var(--display); font-weight: 700; font-size: 14px; letter-spacing: .04em;
+  padding: 5px 9px 4px;
+  background: var(--plate); color: var(--black);
+  transform: rotate(-1.2deg);      /* a job tag stapled to the stock */
+}
+
+/* DBF: carbon twill */
+.band-dbf {
+  color: var(--plate);
+  background-color: #060606;
+  background-image:
+    repeating-linear-gradient(45deg,  rgba(255,255,255,.09) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(-45deg, rgba(255,255,255,.05) 0 2px, transparent 2px 9px);
+}
+.band-dbf .tag { background: var(--plate); }
+/* ROV: still water with one soft light */
+.band-rov {
+  color: var(--plate);
+  background: radial-gradient(120% 90% at 12% 0%, rgba(120,180,210,.28), transparent 55%), var(--water);
+}
+/* MED: brushed stainless */
+.band-med {
+  color: var(--black);
+  background: var(--steel);
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.35) 0 1px, transparent 1px 3px);
+}
+.band-med .tag { background: var(--black); color: var(--steel); }
+/* SDC: the mill table, circular tool marks in the plate */
+.band-sdc {
+  color: var(--black);
+  background: var(--plate-deep);
+  background-image: repeating-radial-gradient(circle at 30% 120%, rgba(255,255,255,.22) 0 1px, transparent 1px 7px);
+}
+.band-sdc .tag { background: var(--black); color: var(--plate-light); }
+/* IAM3D: a printed part, fine horizontal layer lines */
+.band-iam3d {
+  color: var(--plate);
+  background-color: #0A0A0A;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.11) 0 1px, transparent 1px 5px);
+}
+.band-iam3d .tag { background: var(--plate); }
+.band-code.is-long { font-size: clamp(88px, 10.5vw, 150px); }
+.bench-foot { padding: 22px var(--gutter) 0; font-size: 16.5px; }
+
+/* ── How you get in: the PEI print bed ──────────────────────────────── */
+.steps {
+  margin-top: clamp(64px, 9vw, 120px);
+  padding: clamp(48px, 7vw, 96px) var(--gutter);
+  background-color: var(--pei);
+  background-image: repeating-linear-gradient(-60deg, rgba(0,0,0,.05) 0 1px, transparent 1px 6px);
+  color: var(--black);
+}
+.steps-head { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 5vw, 76px); line-height: .92; max-width: 12ch; text-wrap: balance; }
+.steps-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--gutter); margin-top: clamp(32px, 4vw, 56px); }
+.step-num { font-family: var(--display); font-weight: 900; font-size: clamp(88px, 9vw, 136px); line-height: .8; }
+.step-title { font-family: var(--display); font-weight: 700; font-size: 28px; line-height: 1; margin-top: 18px; }
+.step-body { margin-top: 12px; max-width: 40ch; font-size: 17px; }
+.steps-cta { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; margin-top: clamp(32px, 4vw, 56px); }
+
+/* ── Parts list: units and their people ─────────────────────────────── */
+.parts { padding: clamp(64px, 9vw, 120px) var(--gutter) 0; }
+.parts-head { font-family: var(--display); font-weight: 800; font-size: clamp(40px, 5vw, 76px); line-height: .92; }
+.parts-list { margin-top: clamp(28px, 3vw, 44px); }
+.unit {
+  display: grid;
+  grid-template-columns: minmax(200px, 30%) 1fr;
+  gap: var(--gutter);
+  padding: 30px 0 34px;
+  /* an engraved groove, not a hairline: a dark cut over a light lip */
+  border-top: 1px solid rgba(0,0,0,.38);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4);
+}
+.unit-key { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 3vw, 42px); line-height: 1; }
+.unit-blurb { max-width: 56ch; }
+.unit-people { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 6px 26px; font-size: 16.5px; }
+.unit-people a { text-decoration: none; }
+.unit-people a b { font-family: var(--display); font-weight: 700; font-size: 20px; letter-spacing: .005em; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.unit-people a:hover b { text-decoration-thickness: 2px; }
+.unit-people a span { color: var(--ink-soft); }
+.parts-foot { padding-top: 26px; border-top: 1px solid rgba(0,0,0,.38); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); font-size: 16.5px; }
+
+/* ── ASME, the parent ───────────────────────────────────────────────── */
+.parent { padding: clamp(64px, 9vw, 120px) var(--gutter) 0; }
+.parent p { font-size: clamp(21px, 1.9vw, 27px); line-height: 1.4; max-width: 56ch; }
+.parent .links { margin-top: 22px; display: flex; gap: 26px; flex-wrap: wrap; font-size: 17px; }
+
+/* ── Title block ────────────────────────────────────────────────────── */
+.titleblock {
+  margin: clamp(64px, 9vw, 120px) var(--gutter) 40px;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.4fr 2.2fr;
+  border: 1px solid var(--black);
+}
+.tb-cell { padding: 12px 14px 14px; border-right: 1px solid var(--black); min-width: 0; }
+.tb-cell:last-child { border-right: 0; }
+.tb-label { font-family: var(--display); font-weight: 700; font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); }
+.tb-value { margin-top: 4px; font-size: 16px; line-height: 1.35; }
+.tb-value.big { font-family: var(--display); font-weight: 800; font-size: 26px; line-height: 1; margin-top: 6px; }
+.tb-links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.tb-links a { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+.tb-links a:hover { text-decoration-thickness: 2px; }
+
+/* ── Tablet ─────────────────────────────────────────────────────────── */
+@media (max-width: 1100px) {
+  .hero-copy { grid-template-columns: 1fr; gap: 18px; }
+  .inspect { grid-template-columns: minmax(220px, 34vw) 1fr; }
+  .sheet-line { grid-template-columns: 1fr; gap: 4px; }
+  .band { grid-template-columns: 1fr; }
+  .band-code { font-size: clamp(96px, 20vw, 160px); }
+  .band-code.is-long { font-size: clamp(64px, 14vw, 120px); }
+  .titleblock { grid-template-columns: 1fr 1fr; }
+  .tb-cell:nth-child(2) { border-right: 0; }
+  .tb-cell:nth-child(1), .tb-cell:nth-child(2) { border-bottom: 1px solid var(--black); }
+}
+
+/* ── Phone: the rack lies down ──────────────────────────────────────── */
+@media (max-width: 767px) {
+  :root { --streak-angle: 190deg; }
+  body::before { display: none; }         /* drop plate grain on small screens */
+  .top { flex-direction: column; align-items: flex-start; gap: 12px; padding-top: 18px; }
+  .wordmark small { display: none; }
+  .top-nav { gap: 14px; }
+  .top-nav .sep { margin-left: 0; }
+  .hero { min-height: 0; padding-top: 22px; grid-template-rows: auto auto; }
+  .rack-wrap { height: auto; }
+  .hero-copy { padding-bottom: 26px; }
+  .hero-copy { grid-template-columns: 1fr; gap: 16px; }
+  .h1 { font-size: clamp(40px, 11vw, 50px); max-width: none; }
+  .cta-row { flex-direction: column; align-items: stretch; gap: 16px; }
+  .cta-row .btn { width: 100%; }
+
+  .rack-wrap { padding: 0 var(--gutter); }
+  .rack { flex-direction: column; height: auto; gap: var(--slot); }
+  .bar {
+    flex: none;
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    grid-template-rows: 64px 0fr;
+    transition: grid-template-rows .45s var(--ease-pull);
+    box-shadow: inset 0 2px 0 rgba(255,255,255,.16), inset 0 -2px 0 rgba(0,0,0,.7);
+  }
+  .bar::after { display: none; }
+  .bar.is-pulled, html:not(.js) .bar:focus-within { flex: none; grid-template-rows: 64px 1fr; }
+  .bar-pull { position: relative; inset: auto; grid-column: 1 / -1; grid-row: 1; display: grid; grid-template-columns: 64px 1fr; height: 64px; }
+  .bar .bar-portrait { flex: none; height: 64px; width: 64px; max-height: none; }
+  .bar .bar-portrait img { transform: scale(calc(var(--zoom) * 1.15)); }
+  .bar.is-pulled .bar-portrait img { transform: scale(calc(var(--zoom) * 1.15)); }
+  .bar .bar-vignette { background: linear-gradient(to right, transparent 55%, rgba(0,0,0,.6) 100%), radial-gradient(90% 90% at 50% 45%, transparent 40%, rgba(0,0,0,.6) 100%); }
+  .bar-body { padding: 0 14px; align-items: center; }
+  .bar-stamp { writing-mode: horizontal-tb; transform: none; padding-left: 0; height: auto; }
+  .bar-role { margin-block-start: 3px; }
+  .bar-name { font-size: 21px; }
+  .bar-role { font-size: 13px; }
+  .bar.is-pulled .bar-stamp, html:not(.js) .bar:focus-within .bar-stamp { opacity: 1; }
+  .bar-panel {
+    position: relative; grid-column: 1 / -1; grid-row: 2;
+    min-height: 0; overflow: hidden;
+    padding: 0 16px;
+  }
+  .bar.is-pulled .bar-panel, html:not(.js) .bar:focus-within .bar-panel { padding: 6px 16px 18px; }
+  .bar-panel h3 { display: none; }
+  .bar-panel .panel-role { display: none; }
+  .bar-panel .panel-charge { margin-top: 4px; max-width: none; }
+
+  .inspect-run { margin-top: 40px; }
+  .inspect { grid-template-columns: 1fr; gap: 18px; min-height: 0; padding: 28px var(--gutter); align-items: start; }
+  .inspect + .inspect { border-top: 1px solid rgba(0,0,0,.38); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
+  .inspect-bar { height: auto; min-height: 0; aspect-ratio: 4 / 3; overflow: hidden; }
+  .inspect-bar .bar-portrait { width: auto; height: auto; flex: 1 1 auto; }
+  .inspect-bar .bar-portrait img { transform: scale(calc(var(--zoom) * 1.08)); }
+  .sheet-count { font-size: 56px; margin-bottom: -.05em; }
+  .sheet-name { font-size: clamp(38px, 11vw, 48px); }
+  .steps-list { grid-template-columns: 1fr; gap: 30px; }
+  .step { display: grid; grid-template-columns: 72px 1fr; gap: 14px; }
+  .step-num { font-size: 72px; grid-row: 1 / span 2; }
+  .step-title { margin-top: 6px; font-size: 24px; }
+  .unit { grid-template-columns: 1fr; gap: 10px; }
+  .titleblock { grid-template-columns: 1fr; }
+  .tb-cell { border-right: 0; border-bottom: 1px solid var(--black); }
+  .tb-cell:last-child { border-bottom: 0; }
+}
+
+/* ── Motion preferences ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: .01ms !important; transition-delay: 0s !important; animation: none !important; }
+  .pre-motion .bar { transform: none; --lit: .3; }
+  .pre-motion .hero { --lx: 30%; }
+  .pre-motion .h1-block, .pre-motion .deck, .pre-motion .cta-row { visibility: visible; }
+  .bar { transition: none; }
+}

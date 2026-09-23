@@ -2,7 +2,7 @@
 
 import pytest
 
-PUBLIC = ["/", "/events", "/gallery", "/who-we-are", "/executive-team", "/projects", "/contact", "/join", "/sponsors", "/login", "/signup", "/forgot-password", "/admin-login", "/kiosk", "/healthz"]
+PUBLIC = ["/", "/events", "/gallery", "/who-we-are", "/projects", "/contact", "/join", "/sponsors", "/login", "/signup", "/forgot-password", "/admin-login", "/kiosk", "/healthz"]
 MEMBER = [
     "/portal/member",
     "/portal/member/inventory",

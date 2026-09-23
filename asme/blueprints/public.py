@@ -7,9 +7,19 @@ from pathlib import Path
 
 from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, send_from_directory, url_for
 
+from asme.auth.session import current_auth_user
 from asme.blueprints._context import public_site_context
 from asme.blueprints._helpers import flash_error
 from asme.content_data import FRONT_ABOUT_ASME_FACTS, FRONT_CLUB_HIGHLIGHTS, FRONT_CLUB_MISSION, FRONT_UIOWA_CURRENT_PROJECTS
+from asme.welcome_data import (
+    ASME_FACTS,
+    BOARD_REVISED_ON,
+    BOARD_REVISION,
+    EXEC_BOARD,
+    EXEC_UNITS,
+    WELCOME_BUILDS,
+    WELCOME_ENTRY_STEPS,
+)
 from asme.models import Project
 from asme.services import content
 from asme.services.errors import ServiceError
@@ -18,8 +28,38 @@ from asme.utils import parse_json_list
 bp = Blueprint("public", __name__)
 
 
+_COUNT_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"]
+
+
+def _count_word(n: int) -> str:
+    return _COUNT_WORDS[n] if 0 <= n < len(_COUNT_WORDS) else str(n)
+
+
 @bp.get("/")
 def public_home():
+    units = []
+    for unit in EXEC_UNITS:
+        members = [m for m in EXEC_BOARD if m["unit"] == unit["key"]]
+        if members:
+            units.append({**unit, "members": members})
+    return render_template(
+        "site/welcome.html",
+        page_title="Welcome",
+        board=EXEC_BOARD,
+        board_count_word=_count_word(len(EXEC_BOARD)),
+        units=units,
+        builds=WELCOME_BUILDS,
+        entry_steps=WELCOME_ENTRY_STEPS,
+        asme_facts=ASME_FACTS,
+        board_revision=BOARD_REVISION,
+        board_revised_on=BOARD_REVISED_ON,
+        current_user=current_auth_user(),
+    )
+
+
+@bp.get("/intro")
+def public_intro():
+    """The scroll-scrubbed rover sequence that used to be the front door."""
     return render_template("site/landing.html")
 
 
@@ -96,16 +136,6 @@ def public_who_we_are():
 @bp.get("/about")
 def public_about_alias():
     return redirect(url_for("public.public_who_we_are"))
-
-
-@bp.get("/executive-team")
-def public_executive_team():
-    return render_template("site/executive_team.html", **public_site_context("Executive Team"))
-
-
-@bp.get("/exec")
-def public_exec_alias():
-    return redirect(url_for("public.public_executive_team"))
 
 
 @bp.get("/projects")

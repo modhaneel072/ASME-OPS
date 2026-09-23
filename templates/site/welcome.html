@@ -1,0 +1,244 @@
+{#- Public welcome page. Standalone on purpose: it is the G440 material rack,
+    not another page of the light site, so it carries its own stylesheet. -#}
+{%- set words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty'] -%}
+{%- set builds_word = words[builds|length] if builds|length < words|length else builds|length -%}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASME at Iowa</title>
+  <meta name="description" content="ASME at the University of Iowa. {{ board|length }} students run {{ builds|length }} competition builds out of one shop. Meet the board, see what is on the bench, and come to a meeting.">
+  <meta property="og:title" content="ASME at Iowa">
+  <meta property="og:description" content="{{ board_count_word|capitalize }} students run {{ builds_word }} builds out of one shop.">
+  <meta property="og:image" content="{{ url_for('static', filename='images/executive/' ~ board[0].photo, _external=True) }}">
+  <link rel="icon" href="{{ url_for('static', filename='asme_logo.png') }}">
+  <meta name="theme-color" content="#C9CBCE">
+  <script>
+    document.documentElement.classList.add("js");
+    // Hold the pre-animation state until the scripts arrive, so the finished hero never flashes first.
+    try {
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches && sessionStorage.getItem("asme-welcome-lit") !== "1") document.documentElement.classList.add("pre-motion");
+    } catch (_) { document.documentElement.classList.add("pre-motion"); }
+    addEventListener("load", function () { if (!window.gsap) document.documentElement.classList.remove("pre-motion"); });
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/welcome.css', v='20260923a') }}">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollToPlugin.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js" defer></script>
+  <script src="{{ url_for('static', filename='js/welcome.js', v='20260923a') }}" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="page">
+
+  <header class="top">
+    <a class="wordmark" href="/">ASME at Iowa<small>American Society of Mechanical Engineers, University of Iowa</small></a>
+    <nav class="top-nav" aria-label="Site">
+      <a href="/events">Events</a>
+      <a href="/projects">Projects</a>
+      <a href="#inspect">Board</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/contact">Contact</a>
+      {% if current_user %}
+      <a class="sep" href="/portal">Portal</a>
+      {% else %}
+      <a class="sep" href="/login">Log in</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main id="main">
+  <section class="hero" aria-labelledby="welcome-h1">
+    <div class="hero-copy">
+      <div class="h1-block">
+        <h1 class="h1" id="welcome-h1">{{ board_count_word|capitalize }} students run {{ builds_word }} builds out of one shop.</h1>
+        <p class="h1 h1-cue-block">
+          <span class="h1-line h1-cue is-mouse">Pull one from the rack.</span>
+          <span class="h1-line h1-cue is-touch">Tap a bar.</span>
+        </p>
+      </div>
+      <div class="hero-aside">
+        <p class="deck">Each bar is a person on the {{ board_revision }} board: what they do, what they are building this year, and how to reach them. Meetings are open to any student.</p>
+        <div class="cta-row">
+          <a class="btn btn-gold" href="/join">Join ASME</a>
+          <a class="link" href="/events">See when the next meeting is</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="rack-wrap">
+      <ul class="rack" id="rack" role="list" aria-label="The executive board">
+        {% for m in board %}
+        {%- set first = m.name.split(' ')[0] -%}
+        <li class="bar" id="bar-{{ m.slug }}" data-slug="{{ m.slug }}" data-name="{{ m.name }}" data-role="{{ m.role }}"
+            style="--pos:{{ m.pos or '50% 30%' }}; --zoom:{{ m.zoom or 1 }}; --lift:{{ m.lift or 1 }};">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-{{ m.slug }}">
+            <span class="sr-only">Pull {{ m.name }}, {{ m.role }}</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="{{ url_for('static', filename='images/executive/' ~ m.photo) }}" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">{{ m.name }}</span>
+                <span class="bar-role">{{ m.role }}</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-{{ m.slug }}">
+            <h3>{{ m.name }}</h3>
+            <p class="panel-role">{{ m.role }}, {{ m.unit }}</p>
+            <p class="panel-charge">&ldquo;{{ m.charge }}&rdquo;</p>
+            <p class="panel-links">
+              {% if m.email %}<a href="mailto:{{ m.email }}">Write to {{ first }}</a>{% elif m.contact_note %}<span>{{ m.contact_note }}</span>{% endif %}
+              <a href="#inspect-{{ m.slug }}" data-pull="{{ m.slug }}">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <p class="sr-only" id="rack-live" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="inspect-run" id="inspect" aria-labelledby="inspect-h">
+    <h2 class="sr-only" id="inspect-h">The board, one at a time</h2>
+    <div class="inspect-stage">
+      <div class="inspect-index" aria-hidden="true">
+        <span class="index-now" id="inspect-now">01</span><span class="index-of">/{{ '%02d'|format(board|length) }}</span>
+      </div>
+      <ul class="inspect-list" role="list">
+        {% for m in board %}
+        {%- set first = m.name.split(' ')[0] -%}
+        <li class="inspect" id="inspect-{{ m.slug }}" data-slug="{{ m.slug }}" data-index="{{ loop.index0 }}"
+            style="--pos:{{ m.pos or '50% 30%' }}; --zoom:{{ m.zoom or 1 }}; --lift:{{ m.lift or 1 }};">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="{{ url_for('static', filename='images/executive/' ~ m.photo) }}" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">{{ m.ref }}, {{ m.unit }}</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">{{ '%02d'|format(loop.index) }}</p>
+            <h3 class="sheet-name">{{ m.name }}</h3>
+            <p class="sheet-role">{{ m.role }}<span class="sheet-unit">, {{ m.unit }}</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>{{ m.charge }}</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>{{ m.focus }}</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>{{ m.involve }}</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              {% if m.email %}<a class="link" href="mailto:{{ m.email }}">Write to {{ first }}</a>{% elif m.contact_note %}<span>{{ m.contact_note }}</span>{% endif %}
+            </p>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      <ol class="inspect-rail" aria-label="Jump to a board member">
+        {% for m in board %}<li><button type="button" class="rail-tick" data-index="{{ loop.index0 }}" aria-label="{{ m.name }}"></button></li>{% endfor %}
+      </ol>
+      <a class="inspect-skip link" href="#bench-h">Skip the tour</a>
+    </div>
+  </section>
+
+  <section class="bench" aria-labelledby="bench-h">
+    <h2 class="bench-head" id="bench-h">On the bench this year</h2>
+    {% for b in builds %}
+    <article class="band band-{{ b.code|lower }}">
+      <div class="band-code{% if b.code|length > 3 %} is-long{% endif %}" aria-hidden="true">{{ b.code }}</div>
+      <div class="band-text">
+        <h3 class="band-name">{{ b.name }}</h3>
+        <p class="band-summary">{{ b.summary }}</p>
+        <p class="band-meta">
+          <span class="tag">{{ b.state }}</span>
+          <span>Managed by <a class="link" href="#inspect-{{ b.lead_slug }}" data-pull="{{ b.lead_slug }}">{{ b.lead }}</a></span>
+        </p>
+      </div>
+    </article>
+    {% endfor %}
+    <p class="bench-foot"><a class="link" href="/projects">Every project, past and present</a></p>
+  </section>
+
+  <section class="steps" aria-labelledby="steps-h">
+    <h2 class="steps-head" id="steps-h">How you get in</h2>
+    <ol class="steps-list" role="list">
+      {% for s in entry_steps %}
+      <li class="step">
+        <div class="step-num" aria-hidden="true">{{ loop.index }}</div>
+        <h3 class="step-title">{{ s.title }}</h3>
+        <p class="step-body">{{ s.body }}</p>
+      </li>
+      {% endfor %}
+    </ol>
+    <div class="steps-cta">
+      <a class="btn btn-black" href="/join">Join ASME</a>
+      <a class="link" href="/events">See when the next meeting is</a>
+    </div>
+  </section>
+
+  <section class="parts" aria-labelledby="parts-h">
+    <h2 class="parts-head" id="parts-h">Who runs what</h2>
+    <div class="parts-list">
+      {% for u in units %}
+      <div class="unit">
+        <h3 class="unit-key">{{ u.key }}</h3>
+        <div>
+          <p class="unit-blurb">{{ u.blurb }}</p>
+          <p class="unit-people">
+            {% for m in u.members %}
+            <a href="#inspect-{{ m.slug }}" data-pull="{{ m.slug }}"><b>{{ m.name }}</b><span>, {{ m.role }}</span></a>
+            {% endfor %}
+          </p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="parent prose" aria-label="About ASME">
+    <p>ASME has been around since {{ asme_facts[0].value }}. It has more than {{ asme_facts[1].value|replace('+', '') }} members in more than {{ asme_facts[2].value|replace('+', '') }} countries, and about {{ asme_facts[3].value }} of them are students. This is the University of Iowa chapter.</p>
+    <p class="links"><a href="/gallery">Photos from the shop</a> <a href="/contact">Get in touch</a> <a href="/sponsors">Sponsor a build</a></p>
+  </section>
+
+  </main>
+
+  <footer class="titleblock" aria-label="Page details">
+    <div class="tb-cell">
+      <div class="tb-label">Chapter</div>
+      <div class="tb-value big">ASME at the University of Iowa</div>
+    </div>
+    <div class="tb-cell">
+      <div class="tb-label">Sheet</div>
+      <div class="tb-value">Welcome</div>
+    </div>
+    <div class="tb-cell">
+      <div class="tb-label">Board revision</div>
+      <div class="tb-value">{{ board_revision }}, revised {{ board_revised_on }}. {{ board|length }} members listed.</div>
+    </div>
+    <div class="tb-cell">
+      <div class="tb-label">Elsewhere</div>
+      <div class="tb-value tb-links">
+        <a href="/join">Join</a>
+        <a href="/events">Events</a>
+        <a href="#inspect">Board</a>
+        <a href="/projects">Projects</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/sponsors">Sponsors</a>
+        <a href="/contact">Contact</a>
+        <a href="/intro">The rover intro</a>
+        {% if current_user %}<a href="/portal">Portal</a>{% else %}<a href="/login">Log in</a>{% endif %}
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

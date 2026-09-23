@@ -1,0 +1,54 @@
+name: Publish landing page to GitHub Pages
+
+# Renders the public welcome page through the Flask app into a static bundle
+# and pushes it to the gh-pages branch, which GitHub Pages serves.
+# Runs on every push to the public-site branch that touches the page.
+
+on:
+  push:
+    branches: [public-site]
+    paths:
+      - "asme/welcome_data.py"
+      - "asme/blueprints/public.py"
+      - "templates/site/welcome.html"
+      - "static/css/welcome.css"
+      - "static/js/welcome.js"
+      - "static/images/executive/**"
+      - "static/asme_logo.png"
+      - "scripts/export_static_site.py"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Export the welcome page
+        env:
+          ASME_ENV: development
+          ASME_SECRET_KEY: static-export-only
+          ASME_OUTBOX_WORKER: "0"
+          # Set this repository variable to the deployed Flask app's URL so
+          # Events / Join / Gallery links on the Pages site resolve.
+          ASME_APP_URL: ${{ vars.ASME_APP_URL }}
+        run: python scripts/export_static_site.py _site
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: _site
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "Publish landing page from ${{ github.sha }}"

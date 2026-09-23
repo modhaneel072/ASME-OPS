@@ -49,3 +49,6 @@ apps/ops-web/e2e/__screenshots__/**/*-actual.png
 
 # TypeScript incremental build state
 *.tsbuildinfo
+
+# Static export for GitHub Pages (built by scripts/export_static_site.py)
+_site/
