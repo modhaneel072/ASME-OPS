@@ -1,0 +1,973 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ASME at Iowa</title>
+  <meta name="description" content="ASME at the University of Iowa. 14 students run 5 competition builds out of one shop. Meet the board, see what is on the bench, and come to a meeting.">
+  <meta property="og:title" content="ASME at Iowa">
+  <meta property="og:description" content="Fourteen students run five builds out of one shop.">
+    <link rel="icon" href="asme_logo.png">
+  <meta name="theme-color" content="#C9CBCE">
+  <script>
+    document.documentElement.classList.add("js");
+    // Hold the pre-animation state until the scripts arrive, so the finished hero never flashes first.
+    try {
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches && sessionStorage.getItem("asme-welcome-lit") !== "1") document.documentElement.classList.add("pre-motion");
+    } catch (_) { document.documentElement.classList.add("pre-motion"); }
+    addEventListener("load", function () { if (!window.gsap) document.documentElement.classList.remove("pre-motion"); });
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;700;800;900&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+  <link rel="stylesheet" href="welcome.css">
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollToPlugin.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js" defer></script>
+  <script src="welcome.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="page">
+
+  <header class="top">
+    <a class="wordmark" href="./">ASME at Iowa<small>American Society of Mechanical Engineers, University of Iowa</small></a>
+    <nav class="top-nav" aria-label="Site">
+      <a href="/events">Events</a>
+      <a href="/projects">Projects</a>
+      <a href="#inspect">Board</a>
+      <a href="/gallery">Gallery</a>
+      <a href="/contact">Contact</a>
+      
+      <a class="sep" href="/login">Log in</a>
+      
+    </nav>
+  </header>
+
+  <main id="main">
+  <section class="hero" aria-labelledby="welcome-h1">
+    <div class="hero-copy">
+      <div class="h1-block">
+        <h1 class="h1" id="welcome-h1">Fourteen students run five builds out of one shop.</h1>
+        <p class="h1 h1-cue-block">
+          <span class="h1-line h1-cue is-mouse">Pull one from the rack.</span>
+          <span class="h1-line h1-cue is-touch">Tap a bar.</span>
+        </p>
+      </div>
+      <div class="hero-aside">
+        <p class="deck">Each bar is a person on the 2026-27 board: what they do, what they are building this year, and how to reach them. Meetings are open to any student.</p>
+        <div class="cta-row">
+          <a class="btn btn-gold" href="/join">Join ASME</a>
+          <a class="link" href="/events">See when the next meeting is</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="rack-wrap">
+      <ul class="rack" id="rack" role="list" aria-label="The executive board">
+        <li class="bar" id="bar-brayden-nagra" data-slug="brayden-nagra" data-name="Brayden Nagra" data-role="President"
+            style="--pos:48% 40%; --zoom:1.0; --lift:0.95;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-brayden-nagra">
+            <span class="sr-only">Pull Brayden Nagra, President</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/brayden_nagra.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Brayden Nagra</span>
+                <span class="bar-role">President</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-brayden-nagra">
+            <h3>Brayden Nagra</h3>
+            <p class="panel-role">President, Leadership</p>
+            <p class="panel-charge">&ldquo;I set the overall direction for ASME at Iowa, coordinate the exec board, and represent our chapter to the College of Engineering, sponsors, and national ASME.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:brayden-nagra@uiowa.edu">Write to Brayden</a>
+              <a href="#inspect-brayden-nagra" data-pull="brayden-nagra">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-paul-conover" data-slug="paul-conover" data-name="Paul Conover" data-role="Vice President"
+            style="--pos:50% 26%; --zoom:1.18; --lift:0.96;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-paul-conover">
+            <span class="sr-only">Pull Paul Conover, Vice President</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/paul_conover.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Paul Conover</span>
+                <span class="bar-role">Vice President</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-paul-conover">
+            <h3>Paul Conover</h3>
+            <p class="panel-role">Vice President, Leadership</p>
+            <p class="panel-charge">&ldquo;I reach out to industry partners, assist with club direction, and oversee project teams.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:pconover@uiowa.edu">Write to Paul</a>
+              <a href="#inspect-paul-conover" data-pull="paul-conover">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-michael-darmody" data-slug="michael-darmody" data-name="Michael Darmody" data-role="Secretary"
+            style="--pos:48% 40%; --zoom:1.5; --lift:0.92;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-michael-darmody">
+            <span class="sr-only">Pull Michael Darmody, Secretary</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/michael_darmody.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Michael Darmody</span>
+                <span class="bar-role">Secretary</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-michael-darmody">
+            <h3>Michael Darmody</h3>
+            <p class="panel-role">Secretary, Leadership</p>
+            <p class="panel-charge">&ldquo;I lead the marketing and events team and oversee several project teams, including our new medical project initiative.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:mdarmody@uiowa.edu">Write to Michael</a>
+              <a href="#inspect-michael-darmody" data-pull="michael-darmody">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-will-fritz" data-slug="will-fritz" data-name="Will Fritz" data-role="Treasurer"
+            style="--pos:48% 33%; --zoom:1.25; --lift:0.92;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-will-fritz">
+            <span class="sr-only">Pull Will Fritz, Treasurer</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/will_fritz.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Will Fritz</span>
+                <span class="bar-role">Treasurer</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-will-fritz">
+            <h3>Will Fritz</h3>
+            <p class="panel-role">Treasurer, Leadership</p>
+            <p class="panel-charge">&ldquo;I manage the club&#39;s overall budget: allocating funds to teams and overseeing the fundraising that supports the club.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:wbfritz@uiowa.edu">Write to Will</a>
+              <a href="#inspect-will-fritz" data-pull="will-fritz">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-jet-etnyre" data-slug="jet-etnyre" data-name="Jet Etnyre" data-role="Executive Coordinator"
+            style="--pos:47% 34%; --zoom:1.12; --lift:1.14;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-jet-etnyre">
+            <span class="sr-only">Pull Jet Etnyre, Executive Coordinator</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/jet_etnyre.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Jet Etnyre</span>
+                <span class="bar-role">Executive Coordinator</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-jet-etnyre">
+            <h3>Jet Etnyre</h3>
+            <p class="panel-role">Executive Coordinator, Leadership</p>
+            <p class="panel-charge">&ldquo;I run scheduling: room requests through ASTRA, then posting the event on Engage once the reservation comes back.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:jaetnyre@uiowa.edu">Write to Jet</a>
+              <a href="#inspect-jet-etnyre" data-pull="jet-etnyre">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-tyler-tatman" data-slug="tyler-tatman" data-name="Tyler Tatman" data-role="Design Build Fly Manager"
+            style="--pos:50% 19%; --zoom:1.55; --lift:0.97;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-tyler-tatman">
+            <span class="sr-only">Pull Tyler Tatman, Design Build Fly Manager</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/tyler_tatman.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Tyler Tatman</span>
+                <span class="bar-role">Design Build Fly Manager</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-tyler-tatman">
+            <h3>Tyler Tatman</h3>
+            <p class="panel-role">Design Build Fly Manager, Project Teams</p>
+            <p class="panel-charge">&ldquo;I manage and aid in design and production of the RC aircraft for the DBF competition.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:ttatman@uiowa.edu">Write to Tyler</a>
+              <a href="#inspect-tyler-tatman" data-pull="tyler-tatman">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-corbin-dexter" data-slug="corbin-dexter" data-name="Corbin Dexter" data-role="MATE ROV Manager"
+            style="--pos:52% 30%; --zoom:1.1; --lift:0.9;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-corbin-dexter">
+            <span class="sr-only">Pull Corbin Dexter, MATE ROV Manager</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/corbin_dexter.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Corbin Dexter</span>
+                <span class="bar-role">MATE ROV Manager</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-corbin-dexter">
+            <h3>Corbin Dexter</h3>
+            <p class="panel-role">MATE ROV Manager, Project Teams</p>
+            <p class="panel-charge">&ldquo;I manage the teams working on the ROV and help them through technical and design problems.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:cldexter@uiowa.edu">Write to Corbin</a>
+              <a href="#inspect-corbin-dexter" data-pull="corbin-dexter">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-ryan-maire" data-slug="ryan-maire" data-name="Ryan Maire" data-role="Medical Project Manager"
+            style="--pos:47% 30%; --zoom:1.15; --lift:1.12;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-ryan-maire">
+            <span class="sr-only">Pull Ryan Maire, Medical Project Manager</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/ryan_maire.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Ryan Maire</span>
+                <span class="bar-role">Medical Project Manager</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-ryan-maire">
+            <h3>Ryan Maire</h3>
+            <p class="panel-role">Medical Project Manager, Project Teams</p>
+            <p class="panel-charge">&ldquo;I manage and assist the design, prototyping, and fabrication of the medical project.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:ryan-maire@uiowa.edu">Write to Ryan</a>
+              <a href="#inspect-ryan-maire" data-pull="ryan-maire">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-colin-carroll" data-slug="colin-carroll" data-name="Colin Carroll" data-role="SDC Project Manager"
+            style="--pos:50% 36%; --zoom:1.15; --lift:0.9;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-colin-carroll">
+            <span class="sr-only">Pull Colin Carroll, SDC Project Manager</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/colin_carroll.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Colin Carroll</span>
+                <span class="bar-role">SDC Project Manager</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-colin-carroll">
+            <h3>Colin Carroll</h3>
+            <p class="panel-role">SDC Project Manager, Project Teams</p>
+            <p class="panel-charge">&ldquo;I help the SDC project teams design and manufacture their competition entries.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:ccarroll3@uiowa.edu">Write to Colin</a>
+              <a href="#inspect-colin-carroll" data-pull="colin-carroll">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-neel-modha" data-slug="neel-modha" data-name="Neel Modha" data-role="IAM3D Project Manager"
+            style="--pos:52% 34%; --zoom:1.05; --lift:0.95;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-neel-modha">
+            <span class="sr-only">Pull Neel Modha, IAM3D Project Manager</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/neel_modha.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Neel Modha</span>
+                <span class="bar-role">IAM3D Project Manager</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-neel-modha">
+            <h3>Neel Modha</h3>
+            <p class="panel-role">IAM3D Project Manager, Project Teams</p>
+            <p class="panel-charge">&ldquo;I manage the IAM3D project, our entry in ASME&#39;s additive manufacturing design challenge, and the teams building for it.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:nmodha@uiowa.edu">Write to Neel</a>
+              <a href="#inspect-neel-modha" data-pull="neel-modha">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-nathan-fish" data-slug="nathan-fish" data-name="Nathan Fish" data-role="Shop Manager"
+            style="--pos:47% 20%; --zoom:1.0; --lift:0.92;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-nathan-fish">
+            <span class="sr-only">Pull Nathan Fish, Shop Manager</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/nathan_fish.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Nathan Fish</span>
+                <span class="bar-role">Shop Manager</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-nathan-fish">
+            <h3>Nathan Fish</h3>
+            <p class="panel-role">Shop Manager, G440</p>
+            <p class="panel-charge">&ldquo;I keep the ASME shop in G440 organized and running.&rdquo;</p>
+            <p class="panel-links">
+              <span>Reach me on Teams</span>
+              <a href="#inspect-nathan-fish" data-pull="nathan-fish">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-preston-hefel" data-slug="preston-hefel" data-name="Preston Hefel" data-role="Inventory Manager"
+            style="--pos:50% 36%; --zoom:1.15; --lift:1.06;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-preston-hefel">
+            <span class="sr-only">Pull Preston Hefel, Inventory Manager</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/preston_hefel.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Preston Hefel</span>
+                <span class="bar-role">Inventory Manager</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-preston-hefel">
+            <h3>Preston Hefel</h3>
+            <p class="panel-role">Inventory Manager, G440</p>
+            <p class="panel-charge">&ldquo;I co-manage G440: the consumables, the tools, and a space clean enough for technical teams to work in.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:phefel@uiowa.edu">Write to Preston</a>
+              <a href="#inspect-preston-hefel" data-pull="preston-hefel">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-dawson-fish" data-slug="dawson-fish" data-name="Dawson Fish" data-role="Make-A-Thon Coordinator"
+            style="--pos:48% 22%; --zoom:1.2; --lift:0.95;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-dawson-fish">
+            <span class="sr-only">Pull Dawson Fish, Make-A-Thon Coordinator</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/dawson_fish.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Dawson Fish</span>
+                <span class="bar-role">Make-A-Thon Coordinator</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-dawson-fish">
+            <h3>Dawson Fish</h3>
+            <p class="panel-role">Make-A-Thon Coordinator, Programs</p>
+            <p class="panel-charge">&ldquo;I put on this year&#39;s Make-A-Thon.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:dmfish@uiowa.edu">Write to Dawson</a>
+              <a href="#inspect-dawson-fish" data-pull="dawson-fish">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        <li class="bar" id="bar-henry-strauss" data-slug="henry-strauss" data-name="Henry Strauss" data-role="Marketing Lead"
+            style="--pos:48% 30%; --zoom:1.2; --lift:1.15;">
+          <button class="bar-pull" type="button" aria-expanded="false" aria-controls="panel-henry-strauss">
+            <span class="sr-only">Pull Henry Strauss, Marketing Lead</span>
+            <figure class="bar-portrait" aria-hidden="true">
+              <img src="images/henry_strauss.jpg" alt="" width="640" height="900" loading="eager" decoding="async">
+              <span class="bar-vignette"></span>
+            </figure>
+            <span class="bar-body" aria-hidden="true">
+              <span class="bar-stamp">
+                <span class="bar-name">Henry Strauss</span>
+                <span class="bar-role">Marketing Lead</span>
+              </span>
+            </span>
+          </button>
+          <div class="bar-panel" id="panel-henry-strauss">
+            <h3>Henry Strauss</h3>
+            <p class="panel-role">Marketing Lead, Programs</p>
+            <p class="panel-charge">&ldquo;I make the marketing materials and campaigns that grow and support every ASME operation.&rdquo;</p>
+            <p class="panel-links">
+              <a href="mailto:hrstrauss@uiowa.edu">Write to Henry</a>
+              <a href="#inspect-henry-strauss" data-pull="henry-strauss">Read the sheet</a>
+            </p>
+          </div>
+        </li>
+        
+      </ul>
+      <p class="sr-only" id="rack-live" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="inspect-run" id="inspect" aria-labelledby="inspect-h">
+    <h2 class="sr-only" id="inspect-h">The board, one at a time</h2>
+    <div class="inspect-stage">
+      <div class="inspect-index" aria-hidden="true">
+        <span class="index-now" id="inspect-now">01</span><span class="index-of">/14</span>
+      </div>
+      <ul class="inspect-list" role="list">
+        <li class="inspect" id="inspect-brayden-nagra" data-slug="brayden-nagra" data-index="0"
+            style="--pos:48% 40%; --zoom:1.0; --lift:0.95;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/brayden_nagra.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">LDR-01, Leadership</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">01</p>
+            <h3 class="sheet-name">Brayden Nagra</h3>
+            <p class="sheet-role">President<span class="sheet-unit">, Leadership</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I set the overall direction for ASME at Iowa, coordinate the exec board, and represent our chapter to the College of Engineering, sponsors, and national ASME.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Building sustainable systems for funding, mentorship, and project management, so we can support 150 to 200+ active members and multiple national competition teams.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Come to me to get plugged into a project team, start a new initiative, or talk about sponsorships, leadership opportunities, or long-term plans for the club.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:brayden-nagra@uiowa.edu">Write to Brayden</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-paul-conover" data-slug="paul-conover" data-index="1"
+            style="--pos:50% 26%; --zoom:1.18; --lift:0.96;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/paul_conover.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">LDR-02, Leadership</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">02</p>
+            <h3 class="sheet-name">Paul Conover</h3>
+            <p class="sheet-role">Vice President<span class="sheet-unit">, Leadership</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I reach out to industry partners, assist with club direction, and oversee project teams.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Expanding ASME at Iowa to create more technically ambitious engineers who have the drive required to succeed in industry.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Companies looking to get involved can reach out to me, as well as any students who want to join.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:pconover@uiowa.edu">Write to Paul</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-michael-darmody" data-slug="michael-darmody" data-index="2"
+            style="--pos:48% 40%; --zoom:1.5; --lift:0.92;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/michael_darmody.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">LDR-03, Leadership</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">03</p>
+            <h3 class="sheet-name">Michael Darmody</h3>
+            <p class="sheet-role">Secretary<span class="sheet-unit">, Leadership</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I lead the marketing and events team and oversee several project teams, including our new medical project initiative.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>ASME&#39;s growth and long-term sustainability: every member gaining the experience, skills, and connections to land an internship or job in their field.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Attend our business invitationals to meet employers. Reach out about joining, internship applications, or a resume review.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:mdarmody@uiowa.edu">Write to Michael</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-will-fritz" data-slug="will-fritz" data-index="3"
+            style="--pos:48% 33%; --zoom:1.25; --lift:0.92;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/will_fritz.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">LDR-04, Leadership</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">04</p>
+            <h3 class="sheet-name">Will Fritz</h3>
+            <p class="sheet-role">Treasurer<span class="sheet-unit">, Leadership</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I manage the club&#39;s overall budget: allocating funds to teams and overseeing the fundraising that supports the club.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Accurate records and transparency with members about our finances.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Bring me any budget question.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:wbfritz@uiowa.edu">Write to Will</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-jet-etnyre" data-slug="jet-etnyre" data-index="4"
+            style="--pos:47% 34%; --zoom:1.12; --lift:1.14;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/jet_etnyre.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">LDR-05, Leadership</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">05</p>
+            <h3 class="sheet-name">Jet Etnyre</h3>
+            <p class="sheet-role">Executive Coordinator<span class="sheet-unit">, Leadership</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I run scheduling: room requests through ASTRA, then posting the event on Engage once the reservation comes back.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Events outside of GBMs. I built the Dallas trip itinerary and worked on getting the hotel.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Show up to GBMs and events. I would love to hear ideas for socials, games, and sports for next year.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:jaetnyre@uiowa.edu">Write to Jet</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-tyler-tatman" data-slug="tyler-tatman" data-index="5"
+            style="--pos:50% 19%; --zoom:1.55; --lift:0.97;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/tyler_tatman.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">PRJ-01, Project Teams</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">06</p>
+            <h3 class="sheet-name">Tyler Tatman</h3>
+            <p class="sheet-role">Design Build Fly Manager<span class="sheet-unit">, Project Teams</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I manage and aid in design and production of the RC aircraft for the DBF competition.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Getting our project proposal approved so the team can compete.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Show up to general meetings and the social events we host.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:ttatman@uiowa.edu">Write to Tyler</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-corbin-dexter" data-slug="corbin-dexter" data-index="6"
+            style="--pos:52% 30%; --zoom:1.1; --lift:0.9;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/corbin_dexter.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">PRJ-02, Project Teams</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">07</p>
+            <h3 class="sheet-name">Corbin Dexter</h3>
+            <p class="sheet-role">MATE ROV Manager<span class="sheet-unit">, Project Teams</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I manage the teams working on the ROV and help them through technical and design problems.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Building a foundation for this project that we can take to competition in the coming years.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Take part in technical meetings and bring new ideas for the project.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:cldexter@uiowa.edu">Write to Corbin</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-ryan-maire" data-slug="ryan-maire" data-index="7"
+            style="--pos:47% 30%; --zoom:1.15; --lift:1.12;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/ryan_maire.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">PRJ-03, Project Teams</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">08</p>
+            <h3 class="sheet-name">Ryan Maire</h3>
+            <p class="sheet-role">Medical Project Manager<span class="sheet-unit">, Project Teams</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I manage and assist the design, prototyping, and fabrication of the medical project.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Getting everyone on the team involved in every step, so we produce a great product by the end of the year.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Show up to the meetings and events ASME hosts.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:ryan-maire@uiowa.edu">Write to Ryan</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-colin-carroll" data-slug="colin-carroll" data-index="8"
+            style="--pos:50% 36%; --zoom:1.15; --lift:0.9;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/colin_carroll.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">PRJ-04, Project Teams</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">09</p>
+            <h3 class="sheet-name">Colin Carroll</h3>
+            <p class="sheet-role">SDC Project Manager<span class="sheet-unit">, Project Teams</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I help the SDC project teams design and manufacture their competition entries.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Helping every SDC team member build testing and iterative design skills.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Ask me anything about the SDC rules, or for help developing your project.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:ccarroll3@uiowa.edu">Write to Colin</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-neel-modha" data-slug="neel-modha" data-index="9"
+            style="--pos:52% 34%; --zoom:1.05; --lift:0.95;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/neel_modha.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">PRJ-05, Project Teams</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">10</p>
+            <h3 class="sheet-name">Neel Modha</h3>
+            <p class="sheet-role">IAM3D Project Manager<span class="sheet-unit">, Project Teams</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I manage the IAM3D project, our entry in ASME&#39;s additive manufacturing design challenge, and the teams building for it.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Getting every IAM3D team competition-ready this year.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Questions about IAM3D, or about getting on a team: email me any time.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:nmodha@uiowa.edu">Write to Neel</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-nathan-fish" data-slug="nathan-fish" data-index="10"
+            style="--pos:47% 20%; --zoom:1.0; --lift:0.92;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/nathan_fish.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">SHP-01, G440</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">11</p>
+            <h3 class="sheet-name">Nathan Fish</h3>
+            <p class="sheet-role">Shop Manager<span class="sheet-unit">, G440</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I keep the ASME shop in G440 organized and running.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>A clear safety and access training process, so more members can confidently use the space.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Come to me about shop access, equipment, or safety procedures.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <span>Reach me on Teams</span>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-preston-hefel" data-slug="preston-hefel" data-index="11"
+            style="--pos:50% 36%; --zoom:1.15; --lift:1.06;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/preston_hefel.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">SHP-02, G440</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">12</p>
+            <h3 class="sheet-name">Preston Hefel</h3>
+            <p class="sheet-role">Inventory Manager<span class="sheet-unit">, G440</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I co-manage G440: the consumables, the tools, and a space clean enough for technical teams to work in.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Automating inventory check-in and check-out so what we own is tracked accurately.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Bring me anything G440 needs. Ask me about the Inventory Manager role if it interests you.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:phefel@uiowa.edu">Write to Preston</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-dawson-fish" data-slug="dawson-fish" data-index="12"
+            style="--pos:48% 22%; --zoom:1.2; --lift:0.95;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/dawson_fish.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">PGM-01, Programs</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">13</p>
+            <h3 class="sheet-name">Dawson Fish</h3>
+            <p class="sheet-role">Make-A-Thon Coordinator<span class="sheet-unit">, Programs</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I put on this year&#39;s Make-A-Thon.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Widening it to more students and more employers, so everyone gets a high-paced, hands-on engineering experience.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Sign up and compete. That is the whole point of it.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:dmfish@uiowa.edu">Write to Dawson</a>
+            </p>
+          </div>
+        </li>
+        <li class="inspect" id="inspect-henry-strauss" data-slug="henry-strauss" data-index="13"
+            style="--pos:48% 30%; --zoom:1.2; --lift:1.15;">
+          <figure class="inspect-bar" aria-hidden="true">
+            <div class="bar-portrait">
+              <img src="images/henry_strauss.jpg" alt="" width="640" height="900" loading="lazy" decoding="async">
+              <span class="bar-vignette"></span>
+            </div>
+            <figcaption class="inspect-ref">PGM-02, Programs</figcaption>
+          </figure>
+          <div class="inspect-sheet">
+            <p class="sheet-count" aria-hidden="true">14</p>
+            <h3 class="sheet-name">Henry Strauss</h3>
+            <p class="sheet-role">Marketing Lead<span class="sheet-unit">, Programs</span></p>
+            <dl class="sheet-lines">
+              <div class="sheet-line"><dt>What I do</dt><dd>I make the marketing materials and campaigns that grow and support every ASME operation.</dd></div>
+              <div class="sheet-line"><dt>This semester</dt><dd>Growing our online presence so more people find us.</dd></div>
+              <div class="sheet-line"><dt>Get involved</dt><dd>Follow the Instagram page. The outreach team and I keep it current on everything ASME.</dd></div>
+            </dl>
+            <p class="sheet-contact">
+              <a class="link" href="mailto:hrstrauss@uiowa.edu">Write to Henry</a>
+            </p>
+          </div>
+        </li>
+        
+      </ul>
+      <ol class="inspect-rail" aria-label="Jump to a board member">
+        <li><button type="button" class="rail-tick" data-index="0" aria-label="Brayden Nagra"></button></li><li><button type="button" class="rail-tick" data-index="1" aria-label="Paul Conover"></button></li><li><button type="button" class="rail-tick" data-index="2" aria-label="Michael Darmody"></button></li><li><button type="button" class="rail-tick" data-index="3" aria-label="Will Fritz"></button></li><li><button type="button" class="rail-tick" data-index="4" aria-label="Jet Etnyre"></button></li><li><button type="button" class="rail-tick" data-index="5" aria-label="Tyler Tatman"></button></li><li><button type="button" class="rail-tick" data-index="6" aria-label="Corbin Dexter"></button></li><li><button type="button" class="rail-tick" data-index="7" aria-label="Ryan Maire"></button></li><li><button type="button" class="rail-tick" data-index="8" aria-label="Colin Carroll"></button></li><li><button type="button" class="rail-tick" data-index="9" aria-label="Neel Modha"></button></li><li><button type="button" class="rail-tick" data-index="10" aria-label="Nathan Fish"></button></li><li><button type="button" class="rail-tick" data-index="11" aria-label="Preston Hefel"></button></li><li><button type="button" class="rail-tick" data-index="12" aria-label="Dawson Fish"></button></li><li><button type="button" class="rail-tick" data-index="13" aria-label="Henry Strauss"></button></li>
+      </ol>
+      <a class="inspect-skip link" href="#bench-h">Skip the tour</a>
+    </div>
+  </section>
+
+  <section class="bench" aria-labelledby="bench-h">
+    <h2 class="bench-head" id="bench-h">On the bench this year</h2>
+    
+    <article class="band band-dbf">
+      <div class="band-code" aria-hidden="true">DBF</div>
+      <div class="band-text">
+        <h3 class="band-name">Design Build Fly</h3>
+        <p class="band-summary">An unmanned electric radio-controlled aircraft, designed, fabricated, and flown against a mission profile the competition sets.</p>
+        <p class="band-meta">
+          <span class="tag">Proposal</span>
+          <span>Managed by <a class="link" href="#inspect-tyler-tatman" data-pull="tyler-tatman">Tyler Tatman</a></span>
+        </p>
+      </div>
+    </article>
+    
+    <article class="band band-rov">
+      <div class="band-code" aria-hidden="true">ROV</div>
+      <div class="band-text">
+        <h3 class="band-name">MATE ROV</h3>
+        <p class="band-summary">A remotely operated underwater vehicle. First year of the program, building the foundation a competition entry will stand on.</p>
+        <p class="band-meta">
+          <span class="tag">Foundation</span>
+          <span>Managed by <a class="link" href="#inspect-corbin-dexter" data-pull="corbin-dexter">Corbin Dexter</a></span>
+        </p>
+      </div>
+    </article>
+    
+    <article class="band band-med">
+      <div class="band-code" aria-hidden="true">MED</div>
+      <div class="band-text">
+        <h3 class="band-name">Medical Device</h3>
+        <p class="band-summary">A medical product taken the whole way through design, prototyping, and fabrication by the team that scoped it.</p>
+        <p class="band-meta">
+          <span class="tag">Prototyping</span>
+          <span>Managed by <a class="link" href="#inspect-ryan-maire" data-pull="ryan-maire">Ryan Maire</a></span>
+        </p>
+      </div>
+    </article>
+    
+    <article class="band band-sdc">
+      <div class="band-code" aria-hidden="true">SDC</div>
+      <div class="band-text">
+        <h3 class="band-name">Student Design Competition</h3>
+        <p class="band-summary">ASME&#39;s own competition. Teams design, manufacture, and test an entry against this year&#39;s rules, then iterate on what the testing shows.</p>
+        <p class="band-meta">
+          <span class="tag">Iterating</span>
+          <span>Managed by <a class="link" href="#inspect-colin-carroll" data-pull="colin-carroll">Colin Carroll</a></span>
+        </p>
+      </div>
+    </article>
+    
+    <article class="band band-iam3d">
+      <div class="band-code is-long" aria-hidden="true">IAM3D</div>
+      <div class="band-text">
+        <h3 class="band-name">Innovative Additive Manufacturing 3D Challenge</h3>
+        <p class="band-summary">ASME&#39;s additive manufacturing design challenge. Teams take an entry from CAD to a printed, tested part, and make it competition-ready.</p>
+        <p class="band-meta">
+          <span class="tag">Competition prep</span>
+          <span>Managed by <a class="link" href="#inspect-neel-modha" data-pull="neel-modha">Neel Modha</a></span>
+        </p>
+      </div>
+    </article>
+    
+    <p class="bench-foot"><a class="link" href="/projects">Every project, past and present</a></p>
+  </section>
+
+  <section class="steps" aria-labelledby="steps-h">
+    <h2 class="steps-head" id="steps-h">How you get in</h2>
+    <ol class="steps-list" role="list">
+      
+      <li class="step">
+        <div class="step-num" aria-hidden="true">1</div>
+        <h3 class="step-title">Come to a general meeting</h3>
+        <p class="step-body">General body meetings are posted on Engage. Turn up and you are in the room.</p>
+      </li>
+      
+      <li class="step">
+        <div class="step-num" aria-hidden="true">2</div>
+        <h3 class="step-title">Pick a team</h3>
+        <p class="step-body">Talk to the manager whose project you want. DBF, MATE ROV, Medical, SDC, and IAM3D take new members through the year, not only in the fall.</p>
+      </li>
+      
+      <li class="step">
+        <div class="step-num" aria-hidden="true">3</div>
+        <h3 class="step-title">Get into G440</h3>
+        <p class="step-body">Safety and access training clears you for the shop. After that the tools, the printers, and the bench are yours to work on.</p>
+      </li>
+      
+    </ol>
+    <div class="steps-cta">
+      <a class="btn btn-black" href="/join">Join ASME</a>
+      <a class="link" href="/events">See when the next meeting is</a>
+    </div>
+  </section>
+
+  <section class="parts" aria-labelledby="parts-h">
+    <h2 class="parts-head" id="parts-h">Who runs what</h2>
+    <div class="parts-list">
+      
+      <div class="unit">
+        <h3 class="unit-key">Leadership</h3>
+        <div>
+          <p class="unit-blurb">Chapter direction, the budget, industry partners, and every room and date on the calendar.</p>
+          <p class="unit-people">
+            
+            <a href="#inspect-brayden-nagra" data-pull="brayden-nagra"><b>Brayden Nagra</b><span>, President</span></a>
+            
+            <a href="#inspect-paul-conover" data-pull="paul-conover"><b>Paul Conover</b><span>, Vice President</span></a>
+            
+            <a href="#inspect-michael-darmody" data-pull="michael-darmody"><b>Michael Darmody</b><span>, Secretary</span></a>
+            
+            <a href="#inspect-will-fritz" data-pull="will-fritz"><b>Will Fritz</b><span>, Treasurer</span></a>
+            
+            <a href="#inspect-jet-etnyre" data-pull="jet-etnyre"><b>Jet Etnyre</b><span>, Executive Coordinator</span></a>
+            
+          </p>
+        </div>
+      </div>
+      
+      <div class="unit">
+        <h3 class="unit-key">Project Teams</h3>
+        <div>
+          <p class="unit-blurb">Five competition builds running at once, each with its own student manager.</p>
+          <p class="unit-people">
+            
+            <a href="#inspect-tyler-tatman" data-pull="tyler-tatman"><b>Tyler Tatman</b><span>, Design Build Fly Manager</span></a>
+            
+            <a href="#inspect-corbin-dexter" data-pull="corbin-dexter"><b>Corbin Dexter</b><span>, MATE ROV Manager</span></a>
+            
+            <a href="#inspect-ryan-maire" data-pull="ryan-maire"><b>Ryan Maire</b><span>, Medical Project Manager</span></a>
+            
+            <a href="#inspect-colin-carroll" data-pull="colin-carroll"><b>Colin Carroll</b><span>, SDC Project Manager</span></a>
+            
+            <a href="#inspect-neel-modha" data-pull="neel-modha"><b>Neel Modha</b><span>, IAM3D Project Manager</span></a>
+            
+          </p>
+        </div>
+      </div>
+      
+      <div class="unit">
+        <h3 class="unit-key">G440</h3>
+        <div>
+          <p class="unit-blurb">The shop. Tools, consumables, safety training, and who is cleared to use what.</p>
+          <p class="unit-people">
+            
+            <a href="#inspect-nathan-fish" data-pull="nathan-fish"><b>Nathan Fish</b><span>, Shop Manager</span></a>
+            
+            <a href="#inspect-preston-hefel" data-pull="preston-hefel"><b>Preston Hefel</b><span>, Inventory Manager</span></a>
+            
+          </p>
+        </div>
+      </div>
+      
+      <div class="unit">
+        <h3 class="unit-key">Programs</h3>
+        <div>
+          <p class="unit-blurb">Make-A-Thon, socials, and the marketing that fills the room.</p>
+          <p class="unit-people">
+            
+            <a href="#inspect-dawson-fish" data-pull="dawson-fish"><b>Dawson Fish</b><span>, Make-A-Thon Coordinator</span></a>
+            
+            <a href="#inspect-henry-strauss" data-pull="henry-strauss"><b>Henry Strauss</b><span>, Marketing Lead</span></a>
+            
+          </p>
+        </div>
+      </div>
+      
+    </div>
+  </section>
+
+  <section class="parent prose" aria-label="About ASME">
+    <p>ASME has been around since 1880. It has more than 100,000 members in more than 140 countries, and about 32,000 of them are students. This is the University of Iowa chapter.</p>
+    <p class="links"><a href="/gallery">Photos from the shop</a> <a href="/contact">Get in touch</a> <a href="/sponsors">Sponsor a build</a></p>
+  </section>
+
+  </main>
+
+  <footer class="titleblock" aria-label="Page details">
+    <div class="tb-cell">
+      <div class="tb-label">Chapter</div>
+      <div class="tb-value big">ASME at the University of Iowa</div>
+    </div>
+    <div class="tb-cell">
+      <div class="tb-label">Sheet</div>
+      <div class="tb-value">Welcome</div>
+    </div>
+    <div class="tb-cell">
+      <div class="tb-label">Board revision</div>
+      <div class="tb-value">2026-27, revised September 2026. 14 members listed.</div>
+    </div>
+    <div class="tb-cell">
+      <div class="tb-label">Elsewhere</div>
+      <div class="tb-value tb-links">
+        <a href="/join">Join</a>
+        <a href="/events">Events</a>
+        <a href="#inspect">Board</a>
+        <a href="/projects">Projects</a>
+        <a href="/gallery">Gallery</a>
+        <a href="/sponsors">Sponsors</a>
+        <a href="/contact">Contact</a>
+        <a href="/intro">The rover intro</a>
+        <a href="/login">Log in</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
