@@ -417,7 +417,7 @@ html:not(.js) .bar:focus-within .bar-stamp { opacity: 0; }
   color: var(--plate-light);
 }
 
-.inspect-sheet { max-width: 62ch; position: relative; z-index: 1; }
+.inspect-sheet { max-width: 62ch; position: relative; z-index: 1; container-type: inline-size; }
 .sheet-count {
   font-family: var(--display); font-weight: 900; line-height: .8; letter-spacing: -.01em;
   font-size: clamp(64px, 8vw, 128px);
@@ -425,10 +425,16 @@ html:not(.js) .bar:focus-within .bar-stamp { opacity: 0; }
   margin-bottom: -.12em;
 }
 .inspect-run.is-pinned .sheet-count { display: none; }
+/* One line, always: sized from the sheet's own width so the longest name fits. */
 .sheet-name {
   font-family: var(--display); font-weight: 800;
-  font-size: clamp(44px, 6vw, 96px); line-height: .9; letter-spacing: -.008em;
+  font-size: clamp(40px, 5.2vw, 96px); line-height: .9; letter-spacing: -.008em;
+  white-space: nowrap;
 }
+@supports (font-size: 1cqw) {
+  .sheet-name { font-size: clamp(36px, 12cqw, 96px); }
+}
+.sheet-name .w { display: inline-block; white-space: nowrap; }
 .sheet-name .c { display: inline-block; }
 .sheet-role { margin-top: 10px; font-size: clamp(17px, 1.4vw, 21px); }
 .sheet-unit { color: var(--ink-soft); }
@@ -649,7 +655,7 @@ html:not(.js) .bar:focus-within .bar-stamp { opacity: 0; }
   .inspect-bar .bar-portrait { width: auto; height: auto; flex: 1 1 auto; }
   .inspect-bar .bar-portrait img { transform: scale(calc(var(--zoom) * 1.08)); }
   .sheet-count { font-size: 56px; margin-bottom: -.05em; }
-  .sheet-name { font-size: clamp(38px, 11vw, 48px); }
+  .sheet-name { font-size: clamp(30px, 11.5cqw, 48px); }
   .steps-list { grid-template-columns: 1fr; gap: 30px; }
   .step { display: grid; grid-template-columns: 72px 1fr; gap: 14px; }
   .step-num { font-size: 72px; grid-row: 1 / span 2; }

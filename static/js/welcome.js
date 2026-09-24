@@ -212,7 +212,7 @@
 
         let nameParts = [name];
         if (window.SplitText) {
-          try { const sp = SplitText.create(name, { type: 'chars', charsClass: 'c' }); splits.push(sp); nameParts = sp.chars; } catch (_) { /* keep whole */ }
+          try { const sp = SplitText.create(name, { type: 'words,chars', wordsClass: 'w', charsClass: 'c' }); splits.push(sp); nameParts = sp.chars; } catch (_) { /* keep whole */ }
         }
 
         tl.set(frame, { autoAlpha: 1, xPercent: 0 }, base);
